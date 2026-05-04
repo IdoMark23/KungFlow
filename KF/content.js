@@ -3,38 +3,44 @@ console.log("content.js loaded");
 window.addEventListener(
   "keydown",
   async (event) => {
-    console.log("Key pressed:", event.key);
-
-    if (event.key !== "Delete" && event.key !== "Backspace") return;
-
     const data = await chrome.storage.local.get([
       "isActive",
+      "keyPressCount",
+      "keyPressHistory",
       "delCount",
       "delHistory"
     ]);
 
-    if (!data.isActive) {
-      console.log("Counter is not active");
-      return;
-    }
+    if (!data.isActive) return;
 
     const now = Date.now();
-    const delHistory = data.delHistory || [];
 
-    delHistory.push({
+    const keyPressHistory = data.keyPressHistory || [];
+    keyPressHistory.push({
       key: event.key,
       timestamp: new Date(now).toLocaleString(),
       epoch: now
     });
 
-    const newCount = (data.delCount || 0) + 1;
+    const updates = {
+      keyPressCount: (data.keyPressCount || 0) + 1,
+      keyPressHistory
+    };
 
-    await chrome.storage.local.set({
-      delCount: newCount,
-      delHistory: delHistory
-    });
+    if (event.key === "Delete" || event.key === "Backspace") {
+      const delHistory = data.delHistory || [];
 
-    console.log("Delete/Backspace counted:", newCount);
+      delHistory.push({
+        key: event.key,
+        timestamp: new Date(now).toLocaleString(),
+        epoch: now
+      });
+
+      updates.delCount = (data.delCount || 0) + 1;
+      updates.delHistory = delHistory;
+    }
+
+    await chrome.storage.local.set(updates);
   },
   true
 );

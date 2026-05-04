@@ -1,10 +1,17 @@
 const countEl = document.getElementById("count");
 const delCountEl = document.getElementById("delCount");
+
+const openTabsCountEl = document.getElementById("openTabsCount");
+const tabSwitchCountEl = document.getElementById("tabSwitchCount");
+const keyPressCountEl = document.getElementById("keyPressCount");
+const deleteKeyCountEl = document.getElementById("deleteKeyCount");
+const typingSpeedEl = document.getElementById("typingSpeed");
+const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
+
 const statusEl = document.getElementById("status");
 const toggleBtn = document.getElementById("toggle");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
-const historyListEl = document.getElementById("historyList");
 
 async function refresh() {
   const data = await chrome.storage.local.get([
@@ -12,14 +19,36 @@ async function refresh() {
     "switchCount",
     "delCount",
     "bgMode",
-    "switchHistory"
+    "metricsHistory"
   ]);
 
   const isActive = data.isActive || false;
-  const history = data.switchHistory || [];
 
   countEl.textContent = data.switchCount || 0;
   delCountEl.textContent = data.delCount || 0;
+
+  const metricsHistory = data.metricsHistory || [];
+  const lastSample = metricsHistory[metricsHistory.length - 1];
+
+  if (lastSample) {
+    openTabsCountEl.textContent = lastSample.openTabsCount ?? 0;
+    tabSwitchCountEl.textContent = lastSample.tabSwitchCount ?? 0;
+    keyPressCountEl.textContent = lastSample.keyPressCount ?? 0;
+    deleteKeyCountEl.textContent = lastSample.deleteKeyCount ?? 0;
+
+    const typingSpeed = lastSample.typingSpeed ?? 0;
+    typingSpeedEl.textContent = Number(typingSpeed).toFixed(1);
+
+    cognitiveLoadScoreEl.textContent =
+      lastSample.cognitiveLoadScore ?? "Not calculated yet";
+  } else {
+    openTabsCountEl.textContent = 0;
+    tabSwitchCountEl.textContent = 0;
+    keyPressCountEl.textContent = 0;
+    deleteKeyCountEl.textContent = 0;
+    typingSpeedEl.textContent = 0;
+    cognitiveLoadScoreEl.textContent = "Not calculated yet";
+  }
 
   toggleBtn.textContent = isActive ? "Stop Counter" : "Start Counter";
 
@@ -33,31 +62,6 @@ async function refresh() {
     document.body.style.background = "linear-gradient(135deg, #e0f7ff, #f8fbff)";
     document.body.style.color = "#1f2937";
   }
-
-  renderHistory(history);
-}
-
-function renderHistory(history) {
-  historyListEl.innerHTML = "";
-
-  if (history.length === 0) {
-    historyListEl.innerHTML = `<li class="empty-history">No tab switches yet</li>`;
-    return;
-  }
-
-  const lastItems = history.slice(-20).reverse();
-
-  lastItems.forEach((item, index) => {
-    const li = document.createElement("li");
-
-    const displayTime =
-      typeof item === "string"
-        ? item
-        : item.timestamp || "Unknown time";
-
-    li.textContent = `${index + 1}. ${displayTime}`;
-    historyListEl.appendChild(li);
-  });
 }
 
 toggleBtn.addEventListener("click", async () => {
@@ -74,8 +78,14 @@ resetBtn.addEventListener("click", async () => {
   await chrome.storage.local.set({
     switchCount: 0,
     switchHistory: [],
+
     delCount: 0,
-    delHistory: []
+    delHistory: [],
+
+    keyPressCount: 0,
+    keyPressHistory: [],
+
+    metricsHistory: []
   });
 
   refresh();
