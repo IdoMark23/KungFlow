@@ -63,6 +63,14 @@
       font-weight: bold;
     }
 
+    .user-row {
+      color: #6b7280;
+      font-size: 12px;
+      margin-bottom: 10px;
+      text-align: center;
+      word-break: break-word;
+    }
+
     .active {
       color: #16a34a;
     }
@@ -97,6 +105,11 @@
       color: #374151;
     }
 
+    #logout {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
     button:hover {
       opacity: 0.85;
     }
@@ -112,6 +125,7 @@
 <body>
   <div class="container">
     <h3>KungFlow Metrics</h3>
+    <div id="userEmail" class="user-row"></div>
 
     <div class="card">
       <div class="section-title">Total counters</div>
@@ -150,6 +164,7 @@
     <button id="toggle">Start Counter</button>
     <button id="reset">Reset</button>
     <button id="changeBg">Change Background</button>
+    <button id="logout">Logout</button>
   </div>
 
   <script src="popup.js"></script>

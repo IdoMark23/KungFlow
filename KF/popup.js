@@ -8,13 +8,17 @@ const deleteKeyCountEl = document.getElementById("deleteKeyCount");
 const typingSpeedEl = document.getElementById("typingSpeed");
 const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
 
+const userEmailEl = document.getElementById("userEmail");
 const statusEl = document.getElementById("status");
 const toggleBtn = document.getElementById("toggle");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
+const logoutBtn = document.getElementById("logout");
 
 async function refresh() {
   const data = await chrome.storage.local.get([
+    "isLoggedIn",
+    "fakeUser",
     "isActive",
     "switchCount",
     "delCount",
@@ -22,7 +26,13 @@ async function refresh() {
     "metricsHistory"
   ]);
 
+  if (!data.isLoggedIn) {
+    window.location.href = "login.html";
+    return;
+  }
+
   const isActive = data.isActive || false;
+  userEmailEl.textContent = data.fakeUser?.email || "Logged in as fake user";
 
   countEl.textContent = data.switchCount || 0;
   delCountEl.textContent = data.delCount || 0;
@@ -99,6 +109,16 @@ changeBgBtn.addEventListener("click", async () => {
   });
 
   refresh();
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await chrome.storage.local.set({
+    isLoggedIn: false,
+    fakeUser: null,
+    isActive: false
+  });
+
+  window.location.href = "login.html";
 });
 
 chrome.storage.onChanged.addListener(() => {

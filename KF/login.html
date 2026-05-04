@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      width: 300px;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7ff, #f8fbff);
+      color: #1f2937;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: #6b7280;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #374151;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+      color: #111827;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 4px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .hint {
+      margin: 12px 0 0;
+      color: #6b7280;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h3>KungFlow Login</h3>
+    <p class="subtitle">Fake login for the current MVP</p>
+
+    <form id="loginForm" class="card">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="user@example.com" autocomplete="email">
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Any password works" autocomplete="current-password">
+
+      <button type="submit">Login</button>
+      <p class="hint">No real authentication is performed yet.</p>
+    </form>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+
+</html>
