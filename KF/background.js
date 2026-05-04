@@ -22,7 +22,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 
     metricsHistory: []
   });
-
+	//Rotem note
   // experiment - only for MVP user self-report
   chrome.alarms.create(ALARM_COGNITIVE_LOAD_REMINDER, {
     periodInMinutes: COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES
