@@ -1,5 +1,12 @@
 console.log("Background service worker loaded");
 
+const COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES = 5;
+// Temporary for testing.
+// Change to 15 for production.
+const METRICS_COLLECTION_INTERVAL_MINUTES = 1;
+const ALARM_COGNITIVE_LOAD_REMINDER = "cognitiveLoadReminder";
+const ALARM_METRICS_COLLECTION = "metricsCollection";
+
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set({
     isActive: false,
@@ -17,13 +24,13 @@ chrome.runtime.onInstalled.addListener(async () => {
   });
 
   // experiment - only for MVP user self-report
-  chrome.alarms.create("cognitiveLoadReminder", {
-    periodInMinutes: 5
+  chrome.alarms.create(ALARM_COGNITIVE_LOAD_REMINDER, {
+    periodInMinutes: COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES
   });
 
   // production - collect behavioral metrics
-  chrome.alarms.create("metricsCollection", {
-    periodInMinutes: 1
+  chrome.alarms.create(ALARM_METRICS_COLLECTION, {
+    periodInMinutes: METRICS_COLLECTION_INTERVAL_MINUTES
   });
 });
 
@@ -52,7 +59,7 @@ chrome.tabs.onActivated.addListener(async () => {
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === "cognitiveLoadReminder") {
+  if (alarm.name === ALARM_COGNITIVE_LOAD_REMINDER) {
     chrome.windows.create({
       url: chrome.runtime.getURL("rating.html"),
       type: "popup",
@@ -63,11 +70,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     return;
   }
 
-  if (alarm.name === "metricsCollection") {
+  if (alarm.name === ALARM_METRICS_COLLECTION) {
     const now = Date.now();
-    // Temporary for testing.
-    // Later, change this back to 15.
-    const collectionWindowMinutes = 1;
+    const collectionWindowMinutes = METRICS_COLLECTION_INTERVAL_MINUTES;
 
     const windowStartTime = now - collectionWindowMinutes * 60 * 1000;
 
@@ -101,7 +106,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       return item && item.epoch && item.epoch >= windowStartTime;
     }).length;
 
-    // keypresedpermin
+    // key presed per min
     const typingSpeed = keyPressCount / collectionWindowMinutes;
 
     const sample = {
