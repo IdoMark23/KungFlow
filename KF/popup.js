@@ -11,6 +11,7 @@ const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
 const userEmailEl = document.getElementById("userEmail");
 const statusEl = document.getElementById("status");
 const toggleBtn = document.getElementById("toggle");
+const toggleReminderBtn = document.getElementById("toggleReminder");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
 const logoutBtn = document.getElementById("logout");
@@ -20,6 +21,7 @@ async function refresh() {
     "isLoggedIn",
     "fakeUser",
     "isActive",
+    "cognitiveLoadReminderEnabled",
     "switchCount",
     "delCount",
     "bgMode",
@@ -32,6 +34,7 @@ async function refresh() {
   }
 
   const isActive = data.isActive || false;
+  const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
   userEmailEl.textContent = data.fakeUser?.email || "Logged in as fake user";
 
   countEl.textContent = data.switchCount || 0;
@@ -61,6 +64,9 @@ async function refresh() {
   }
 
   toggleBtn.textContent = isActive ? "Stop Counter" : "Start Counter";
+  toggleReminderBtn.textContent = reminderEnabled
+    ? "Disable Cognitive Load Popup"
+    : "Enable Cognitive Load Popup";
 
   statusEl.textContent = isActive ? "Active" : "Inactive";
   statusEl.className = isActive ? "status active" : "status inactive";
@@ -79,6 +85,17 @@ toggleBtn.addEventListener("click", async () => {
 
   await chrome.storage.local.set({
     isActive: !data.isActive
+  });
+
+  refresh();
+});
+
+toggleReminderBtn.addEventListener("click", async () => {
+  const data = await chrome.storage.local.get("cognitiveLoadReminderEnabled");
+  const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
+
+  await chrome.storage.local.set({
+    cognitiveLoadReminderEnabled: !reminderEnabled
   });
 
   refresh();

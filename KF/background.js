@@ -12,6 +12,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     isLoggedIn: false,
     fakeUser: null,
     isActive: false,
+    cognitiveLoadReminderEnabled: true,
 
     switchCount: 0,
     switchHistory: [],
@@ -62,6 +63,20 @@ chrome.tabs.onActivated.addListener(async () => {
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_COGNITIVE_LOAD_REMINDER) {
+    const data = await chrome.storage.local.get([
+      "isLoggedIn",
+      "isActive",
+      "cognitiveLoadReminderEnabled"
+    ]);
+
+    if (
+      !data.isLoggedIn ||
+      !data.isActive ||
+      data.cognitiveLoadReminderEnabled === false
+    ) {
+      return;
+    }
+
     chrome.windows.create({
       url: chrome.runtime.getURL("rating.html"),
       type: "popup",
