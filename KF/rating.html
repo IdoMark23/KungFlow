@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7ff, #f8fbff);
+      color: #1f2937;
+    }
+
+    .container {
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    button {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Cognitive Load</h2>
+    <p>How high is your cognitive load right now?</p>
+
+    <div class="buttons">
+      <button data-rating="1">1</button>
+      <button data-rating="2">2</button>
+      <button data-rating="3">3</button>
+      <button data-rating="4">4</button>
+      <button data-rating="5">5</button>
+    </div>
+  </div>
+
+  <script src="rating.js"></script>
+</body>
+</html>
