@@ -10,7 +10,8 @@ const ALARM_METRICS_COLLECTION = "metricsCollection";
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set({
     isLoggedIn: false,
-    fakeUser: null,
+    accessToken: null,
+    user: null,
     isActive: false,
     cognitiveLoadReminderEnabled: true,
 

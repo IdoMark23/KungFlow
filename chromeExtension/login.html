@@ -91,6 +91,26 @@
       font-size: 12px;
       text-align: center;
     }
+
+    .secondary {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .message {
+      min-height: 16px;
+      margin: 10px 0 0;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .success {
+      color: #16a34a;
+    }
   </style>
 </head>
 
@@ -98,20 +118,23 @@
   <div class="container">
     <img class="app-logo" src="assets/icon128.png" alt="KungFlow logo">
     <h3>KungFlow Login</h3>
-    <p class="subtitle">Fake login for the current MVP</p>
+    <p class="subtitle">Sign in to sync KungFlow metrics</p>
 
     <form id="loginForm" class="card">
       <label for="email">Email</label>
-      <input id="email" type="email" placeholder="user@example.com" autocomplete="email">
+      <input id="email" type="email" placeholder="user@example.com" autocomplete="email" required>
 
       <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Any password works" autocomplete="current-password">
+      <input id="password" type="password" placeholder="At least 8 characters" autocomplete="current-password" required>
 
       <button type="submit">Login</button>
-      <p class="hint">No real authentication is performed yet.</p>
+      <button id="registerButton" class="secondary" type="button">Register</button>
+      <p id="message" class="message"></p>
+      <p class="hint">Requires the local KungFlow server on port 3000.</p>
     </form>
   </div>
 
+  <script src="apiClient.js"></script>
   <script src="login.js"></script>
 </body>
 

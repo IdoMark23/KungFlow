@@ -19,7 +19,7 @@ const logoutBtn = document.getElementById("logout");
 async function refresh() {
   const data = await chrome.storage.local.get([
     "isLoggedIn",
-    "fakeUser",
+    "user",
     "isActive",
     "cognitiveLoadReminderEnabled",
     "switchCount",
@@ -35,7 +35,7 @@ async function refresh() {
 
   const isActive = data.isActive || false;
   const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
-  userEmailEl.textContent = data.fakeUser?.email || "Logged in as fake user";
+  userEmailEl.textContent = data.user?.email || "Logged in";
 
   countEl.textContent = data.switchCount || 0;
   delCountEl.textContent = data.delCount || 0;
@@ -131,7 +131,8 @@ changeBgBtn.addEventListener("click", async () => {
 logoutBtn.addEventListener("click", async () => {
   await chrome.storage.local.set({
     isLoggedIn: false,
-    fakeUser: null,
+    accessToken: null,
+    user: null,
     isActive: false
   });
 
