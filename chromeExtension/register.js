@@ -1,7 +1,9 @@
-const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const registerButton = document.getElementById("registerButton");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+const backToLoginButton = document.getElementById("backToLoginButton");
 const messageEl = document.getElementById("message");
 
 async function redirectIfLoggedIn() {
@@ -28,13 +30,23 @@ function setMessage(text, className = "") {
   messageEl.className = `message ${className}`.trim();
 }
 
-loginForm.addEventListener("submit", async (event) => {
+registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const username = usernameInput.value.trim();
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const confirmPassword = confirmPasswordInput.value;
+
+  if (password !== confirmPassword) {
+    setMessage("Passwords do not match.", "error");
+    return;
+  }
 
   try {
+    setMessage("Creating account...");
+    await kungFlowRegister({ email, username, password });
+
     setMessage("Logging in...");
     const authResponse = await kungFlowLogin({ email, password });
     await saveLoggedInSession(authResponse);
@@ -43,8 +55,8 @@ loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-registerButton.addEventListener("click", async () => {
-  window.location.href = "register.html";
+backToLoginButton.addEventListener("click", () => {
+  window.location.href = "login.html";
 });
 
 redirectIfLoggedIn();

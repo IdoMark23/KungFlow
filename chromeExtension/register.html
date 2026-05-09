@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      width: 300px;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7ff, #f8fbff);
+      color: #1f2937;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    .app-logo {
+      display: block;
+      width: 72px;
+      height: 56px;
+      margin: 0 auto 10px;
+      object-fit: contain;
+    }
+
+    h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: #6b7280;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #374151;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+      color: #111827;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 4px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .message {
+      min-height: 16px;
+      margin: 10px 0 0;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .success {
+      color: #16a34a;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <img class="app-logo" src="assets/icon128.png" alt="KungFlow logo">
+    <h3>Create Account</h3>
+    <p class="subtitle">Register to sync KungFlow metrics</p>
+
+    <form id="registerForm" class="card">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="Your name" autocomplete="username" required>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="user@example.com" autocomplete="email" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" required>
+
+      <label for="confirmPassword">Confirm password</label>
+      <input id="confirmPassword" type="password" placeholder="Repeat password" autocomplete="new-password" required>
+
+      <button type="submit">Register</button>
+      <button id="backToLoginButton" class="secondary" type="button">Back to Login</button>
+      <p id="message" class="message"></p>
+    </form>
+  </div>
+
+  <script src="apiClient.js"></script>
+  <script src="register.js"></script>
+</body>
+
+</html>

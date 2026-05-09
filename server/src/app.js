@@ -49,7 +49,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     });
   });
 
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", asyncHandler(async (req, res) => {
     const { email, username, password } = req.body || {};
 
     if (!email || typeof email !== "string") {
@@ -65,7 +65,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const existingUser = app.locals.store.getUserByEmail(normalizedEmail);
+    const existingUser = await app.locals.store.getUserByEmail(normalizedEmail);
 
     if (existingUser) {
       logWarn("auth_register_conflict", {
@@ -77,7 +77,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
       });
     }
 
-    const user = app.locals.store.saveUser({
+    const user = await app.locals.store.saveUser({
       id: cryptoRandomId(),
       email: normalizedEmail,
       username: username || normalizedEmail,
@@ -93,9 +93,9 @@ function createApp({ store = createInMemoryStore() } = {}) {
     res.status(201).json({
       user: toPublicUser(user)
     });
-  });
+  }));
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", asyncHandler(async (req, res) => {
     const { email, password, platform } = req.body || {};
 
     if (!email || typeof email !== "string") {
@@ -111,7 +111,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const user = app.locals.store.getUserByEmail(normalizedEmail);
+    const user = await app.locals.store.getUserByEmail(normalizedEmail);
 
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       logWarn("auth_login_failed", {
@@ -125,7 +125,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     }
 
     const accessToken = createAccessToken();
-    app.locals.store.saveSession({
+    await app.locals.store.saveSession({
       accessToken,
       userId: user.id,
       platform: platform || "extension",
@@ -142,9 +142,9 @@ function createApp({ store = createInMemoryStore() } = {}) {
       accessToken,
       user: toPublicUser(user)
     });
-  });
+  }));
 
-  app.post("/api/metrics", requireAuth, (req, res) => {
+  app.post("/api/metrics", requireAuth, asyncHandler(async (req, res) => {
     const sample = req.body;
 
     if (!sample || typeof sample !== "object") {
@@ -153,9 +153,8 @@ function createApp({ store = createInMemoryStore() } = {}) {
       });
     }
 
-    const savedSample = app.locals.store.saveMetricsSample({
+    const savedSample = await app.locals.store.saveMetricsSample({
       userId: req.user.id,
-      sessionId: sample.sessionId || null,
       platform: sample.platform || "extension",
       timestamp: sample.timestamp || new Date().toISOString(),
       metrics: sample.metrics || {}
@@ -173,10 +172,10 @@ function createApp({ store = createInMemoryStore() } = {}) {
       accepted: true,
       sample: savedSample
     });
-  });
+  }));
 
-  app.get("/api/status/current", requireAuth, (req, res) => {
-    const samples = app.locals.store.getMetricsSamples(req.user.id);
+  app.get("/api/status/current", requireAuth, asyncHandler(async (req, res) => {
+    const samples = await app.locals.store.getMetricsSamples(req.user.id);
     const status = getCurrentStatus(samples);
 
     logInfo("status_current_requested", {
@@ -192,6 +191,18 @@ function createApp({ store = createInMemoryStore() } = {}) {
     res.json({
       userId: req.user.id,
       ...status
+    });
+  }));
+
+  app.use((error, req, res, next) => {
+    logWarn("http_request_failed", {
+      method: req.method,
+      path: req.path,
+      error: error.message
+    });
+
+    res.status(500).json({
+      error: "Internal server error."
     });
   });
 
@@ -211,7 +222,13 @@ function toPublicUser(user) {
   };
 }
 
-function requireAuth(req, res, next) {
+function asyncHandler(handler) {
+  return (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch(next);
+  };
+}
+
+async function requireAuth(req, res, next) {
   const authorization = req.get("authorization") || "";
   const [scheme, accessToken] = authorization.split(" ");
 
@@ -226,34 +243,38 @@ function requireAuth(req, res, next) {
     });
   }
 
-  const session = req.app.locals.store.getSessionByToken(accessToken);
+  try {
+    const session = await req.app.locals.store.getSessionByToken(accessToken);
 
-  if (!session) {
-    logWarn("auth_invalid_token", {
-      method: req.method,
-      path: req.path
-    });
+    if (!session) {
+      logWarn("auth_invalid_token", {
+        method: req.method,
+        path: req.path
+      });
 
-    return res.status(401).json({
-      error: "Invalid or expired access token."
-    });
+      return res.status(401).json({
+        error: "Invalid or expired access token."
+      });
+    }
+
+    const user = await req.app.locals.store.getUserById(session.userId);
+
+    if (!user) {
+      logWarn("auth_session_user_missing", {
+        userId: session.userId
+      });
+
+      return res.status(401).json({
+        error: "Session user no longer exists."
+      });
+    }
+
+    req.session = session;
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  const user = req.app.locals.store.getUserById(session.userId);
-
-  if (!user) {
-    logWarn("auth_session_user_missing", {
-      userId: session.userId
-    });
-
-    return res.status(401).json({
-      error: "Session user no longer exists."
-    });
-  }
-
-  req.session = session;
-  req.user = user;
-  next();
 }
 
 module.exports = { createApp };
