@@ -21,10 +21,18 @@ BEGIN
         DeleteKeyCount INT NULL,
         KeyPressCount INT NULL,
         TypingSpeed FLOAT NULL,
+        MouseSpeed FLOAT NULL,
         CreatedAt DATETIME2 NOT NULL
             CONSTRAINT DF_MetricsSamples_CreatedAt
             DEFAULT SYSUTCDATETIME()
     );
+END;
+GO
+
+IF COL_LENGTH(N'dbo.MetricsSamples', N'MouseSpeed') IS NULL
+BEGIN
+    ALTER TABLE dbo.MetricsSamples
+    ADD MouseSpeed FLOAT NULL;
 END;
 GO
 
@@ -158,23 +166,24 @@ CREATE OR ALTER PROCEDURE dbo.CreateMetricsSample
     @TabSwitchCount INT = NULL,
     @DeleteKeyCount INT = NULL,
     @KeyPressCount INT = NULL,
-    @TypingSpeed FLOAT = NULL
+    @TypingSpeed FLOAT = NULL,
+    @MouseSpeed FLOAT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     INSERT INTO dbo.MetricsSamples (
         UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed
+        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed
     )
     VALUES (
         @UserId, @Platform, @Timestamp,
-        @OpenTabsCount, @TabSwitchCount, @DeleteKeyCount, @KeyPressCount, @TypingSpeed
+        @OpenTabsCount, @TabSwitchCount, @DeleteKeyCount, @KeyPressCount, @TypingSpeed, @MouseSpeed
     );
 
     SELECT
         Id, UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed,
+        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
         CreatedAt
     FROM dbo.MetricsSamples
     WHERE Id = SCOPE_IDENTITY();
@@ -189,7 +198,7 @@ BEGIN
 
     SELECT
         Id, UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed,
+        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
         CreatedAt
     FROM dbo.MetricsSamples
     WHERE UserId = @UserId

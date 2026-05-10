@@ -71,6 +71,45 @@
       font-weight: bold;
     }
 
+    .server-status {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .status-label {
+      color: #6b7280;
+    }
+
+    .status-value {
+      color: #111827;
+      font-weight: bold;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .status-value.good {
+      color: #16a34a;
+    }
+
+    .status-value.warn {
+      color: #d97706;
+    }
+
+    .status-value.bad {
+      color: #dc2626;
+    }
+
     .user-row {
       color: #6b7280;
       font-size: 12px;
@@ -169,8 +208,30 @@
       <div class="label">Typing speed</div>
       <div id="typingSpeed" class="sub-count">0</div>
 
+      <div class="label">Mouse speed</div>
+      <div id="mouseSpeed" class="sub-count">0</div>
+
       <div class="label">Cognitive load score</div>
       <div id="cognitiveLoadScore" class="sub-count">Not calculated yet</div>
+
+      <div class="server-status">
+        <div class="status-row">
+          <span class="status-label">Server sync</span>
+          <span id="serverSyncStatus" class="status-value">Not synced yet</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Cognitive load</span>
+          <span id="cognitiveLoadState" class="status-value">Unknown</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Notifications</span>
+          <span id="notificationSilenceStatus" class="status-value">Not silenced</span>
+        </div>
+        <div id="serverSyncErrorRow" class="status-row">
+          <span class="status-label">Sync error</span>
+          <span id="serverSyncError" class="status-value bad">None</span>
+        </div>
+      </div>
 
       <div id="status" class="status inactive">Inactive</div>
     </div>

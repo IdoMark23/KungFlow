@@ -6,7 +6,15 @@ const tabSwitchCountEl = document.getElementById("tabSwitchCount");
 const keyPressCountEl = document.getElementById("keyPressCount");
 const deleteKeyCountEl = document.getElementById("deleteKeyCount");
 const typingSpeedEl = document.getElementById("typingSpeed");
+const mouseSpeedEl = document.getElementById("mouseSpeed");
 const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
+const serverSyncStatusEl = document.getElementById("serverSyncStatus");
+const cognitiveLoadStateEl = document.getElementById("cognitiveLoadState");
+const notificationSilenceStatusEl = document.getElementById(
+  "notificationSilenceStatus"
+);
+const serverSyncErrorRowEl = document.getElementById("serverSyncErrorRow");
+const serverSyncErrorEl = document.getElementById("serverSyncError");
 
 const userEmailEl = document.getElementById("userEmail");
 const statusEl = document.getElementById("status");
@@ -52,15 +60,21 @@ async function refresh() {
     const typingSpeed = lastSample.typingSpeed ?? 0;
     typingSpeedEl.textContent = Number(typingSpeed).toFixed(1);
 
+    const mouseSpeed = lastSample.mouseSpeed ?? 0;
+    mouseSpeedEl.textContent = Number(mouseSpeed).toFixed(1);
+
     cognitiveLoadScoreEl.textContent =
       lastSample.cognitiveLoadScore ?? "Not calculated yet";
+    updateServerStatus(lastSample);
   } else {
     openTabsCountEl.textContent = 0;
     tabSwitchCountEl.textContent = 0;
     keyPressCountEl.textContent = 0;
     deleteKeyCountEl.textContent = 0;
     typingSpeedEl.textContent = 0;
+    mouseSpeedEl.textContent = 0;
     cognitiveLoadScoreEl.textContent = "Not calculated yet";
+    updateServerStatus(null);
   }
 
   toggleBtn.textContent = isActive ? "Stop Counter" : "Start Counter";
@@ -78,6 +92,79 @@ async function refresh() {
     document.body.style.background = "linear-gradient(135deg, #e0f7ff, #f8fbff)";
     document.body.style.color = "#1f2937";
   }
+}
+
+function updateServerStatus(lastSample) {
+  if (!lastSample) {
+    setStatusValue(serverSyncStatusEl, "Not synced yet", "");
+    setStatusValue(cognitiveLoadStateEl, "Unknown", "");
+    setStatusValue(notificationSilenceStatusEl, "Not silenced", "");
+    serverSyncErrorRowEl.style.display = "none";
+    serverSyncErrorEl.textContent = "None";
+    return;
+  }
+
+  if (lastSample.syncedToServer) {
+    setStatusValue(serverSyncStatusEl, "Synced", "good");
+  } else {
+    setStatusValue(serverSyncStatusEl, "Not synced", "bad");
+  }
+
+  setStatusValue(
+    cognitiveLoadStateEl,
+    formatCognitiveLoadState(lastSample),
+    getCognitiveLoadStateClass(lastSample.cognitiveLoadState)
+  );
+
+  if (lastSample.shouldSilenceNotifications) {
+    setStatusValue(notificationSilenceStatusEl, "Should silence", "warn");
+  } else {
+    setStatusValue(notificationSilenceStatusEl, "Not silenced", "good");
+  }
+
+  if (lastSample.serverSyncError) {
+    serverSyncErrorRowEl.style.display = "flex";
+    serverSyncErrorEl.textContent = lastSample.serverSyncError;
+  } else {
+    serverSyncErrorRowEl.style.display = "none";
+    serverSyncErrorEl.textContent = "None";
+  }
+}
+
+function setStatusValue(element, text, className) {
+  element.textContent = text;
+  element.className = `status-value ${className}`.trim();
+}
+
+function formatCognitiveLoadState(sample) {
+  if (!sample.cognitiveLoadState) {
+    return "Unknown";
+  }
+
+  if (sample.cognitiveLoadState === "collecting_baseline") {
+    return "Collecting baseline";
+  }
+
+  if (sample.cognitiveLoadState === "no_metrics") {
+    return "No metrics yet";
+  }
+
+  return sample.cognitiveLoadState
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getCognitiveLoadStateClass(state) {
+  if (state === "normal" || state === "collecting_baseline") {
+    return "good";
+  }
+
+  if (state === "overloaded") {
+    return "warn";
+  }
+
+  return "";
 }
 
 toggleBtn.addEventListener("click", async () => {
@@ -111,6 +198,7 @@ resetBtn.addEventListener("click", async () => {
 
     keyPressCount: 0,
     keyPressHistory: [],
+    mouseMoveHistory: [],
 
     metricsHistory: []
   });

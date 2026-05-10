@@ -26,6 +26,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     keyPressCount: 0,
     keyPressHistory: [],
 
+    mouseMoveHistory: [],
+
     metricsHistory: []
   });
 	//Rotem note
@@ -103,7 +105,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       "switchHistory",
       "delHistory",
       "metricsHistory",
-      "keyPressHistory"
+      "keyPressHistory",
+      "mouseMoveHistory"
     ]);
 
     if (!data.isActive) return;
@@ -113,6 +116,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const delHistory = data.delHistory || [];
     const metricsHistory = data.metricsHistory || [];
     const keyPressHistory = data.keyPressHistory || [];
+    const mouseMoveHistory = data.mouseMoveHistory || [];
 
     const tabs = await chrome.tabs.query({});
     const openTabsCount = tabs.length;
@@ -129,8 +133,18 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       return item && item.epoch && item.epoch >= windowStartTime;
     }).length;
 
+    const mouseDistancePixels = mouseMoveHistory.reduce((total, item) => {
+      if (!item || !item.epoch || item.epoch < windowStartTime) {
+        return total;
+      }
+
+      return total + Number(item.distancePixels || 0);
+    }, 0);
+
     // key presed per min
     const typingSpeed = keyPressCount / collectionWindowMinutes;
+    const mouseSpeed =
+      mouseDistancePixels / (collectionWindowMinutes * 60);
 
     const sample = {
       timestamp: new Date(now).toISOString(),
@@ -139,7 +153,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       tabSwitchCount: tabSwitchCount,
       deleteKeyCount: deleteKeyCount,
       keyPressCount,
-      typingSpeed
+      typingSpeed,
+      mouseSpeed
     };
 
     try {
@@ -151,7 +166,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           tabSwitchCount: sample.tabSwitchCount,
           deleteKeyCount: sample.deleteKeyCount,
           keyPressCount: sample.keyPressCount,
-          typingSpeed: sample.typingSpeed
+          typingSpeed: sample.typingSpeed,
+          mouseSpeed: sample.mouseSpeed
         }
       });
 

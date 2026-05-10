@@ -81,6 +81,7 @@ function createSqlServerStore({
         .input("DeleteKeyCount", sql.Int, toNullableNumber(metrics.deleteKeyCount))
         .input("KeyPressCount", sql.Int, toNullableNumber(metrics.keyPressCount))
         .input("TypingSpeed", sql.Float, toNullableNumber(metrics.typingSpeed))
+        .input("MouseSpeed", sql.Float, toNullableNumber(metrics.mouseSpeed))
         .execute("dbo.CreateMetricsSample");
 
       return toMetricsSample(result.recordset[0]);
@@ -132,7 +133,8 @@ function toMetricsSample(row) {
       tabSwitchCount: row.TabSwitchCount,
       deleteKeyCount: row.DeleteKeyCount,
       keyPressCount: row.KeyPressCount,
-      typingSpeed: row.TypingSpeed
+      typingSpeed: row.TypingSpeed,
+      mouseSpeed: row.MouseSpeed
     },
     createdAt: toIsoString(row.CreatedAt)
   };
