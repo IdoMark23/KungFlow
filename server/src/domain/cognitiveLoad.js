@@ -39,42 +39,23 @@ function calculateExponentialMovingAverage(
   return alpha * nextValue + (1 - alpha) * currentAverage;
 }
 
-function splitSamplesByBaselineWindow(samples, baselineDurationMs) {
-  const firstSampleTime = new Date(samples[0].timestamp).getTime();
-  const baselineEndTime = firstSampleTime + baselineDurationMs;
-  const baselineSamples = [];
-  const activeSamples = [];
-
-  samples.forEach((sample) => {
-    const sampleTime = new Date(sample.timestamp).getTime();
-
-    if (!Number.isFinite(sampleTime)) {
-      return;
-    }
-
-    if (sampleTime <= baselineEndTime) {
-      baselineSamples.push(sample);
-    } else {
-      activeSamples.push(sample);
-    }
-  });
-
+function splitSamplesByBaselineCount(samples, baselineSampleCount) {
   return {
-    baselineSamples,
-    activeSamples
+    baselineSamples: samples.slice(0, baselineSampleCount),
+    activeSamples: samples.slice(baselineSampleCount)
   };
 }
 
 function calculateAdaptiveBaseline(samples, options) {
   const {
-    baselineDurationMs,
+    baselineSampleCount,
     baselineEmaAlpha,
     metricWeights,
     includeLatestSample
   } = options;
-  const { baselineSamples, activeSamples } = splitSamplesByBaselineWindow(
+  const { baselineSamples, activeSamples } = splitSamplesByBaselineCount(
     samples,
-    baselineDurationMs
+    baselineSampleCount
   );
   const samplesForEma = includeLatestSample
     ? activeSamples
@@ -108,25 +89,20 @@ function getCurrentStatus(samples, options = {}) {
     };
   }
 
-  const baselineDurationMs =
-    options.baselineDurationMs ?? cognitiveLoadConfig.baselineDurationMs;
+  const baselineSampleCount =
+    options.baselineSampleCount ?? cognitiveLoadConfig.baselineSampleCount;
   const overloadThresholdMultiplier =
     options.overloadThresholdMultiplier ??
     cognitiveLoadConfig.overloadThresholdMultiplier;
   const baselineEmaAlpha =
     options.baselineEmaAlpha ?? cognitiveLoadConfig.baselineEmaAlpha;
   const metricWeights = options.metricWeights ?? cognitiveLoadConfig.metricWeights;
-  const firstSampleTime = new Date(samples[0].timestamp).getTime();
   const latestSample = samples[samples.length - 1];
-  const latestSampleTime = new Date(latestSample.timestamp).getTime();
   const cognitiveLoadScore = calculateCognitiveLoadScore(
     latestSample.metrics,
     metricWeights
   );
-  const stillCollectingBaseline =
-    Number.isFinite(firstSampleTime) &&
-    Number.isFinite(latestSampleTime) &&
-    latestSampleTime - firstSampleTime < baselineDurationMs;
+  const stillCollectingBaseline = samples.length < baselineSampleCount;
 
   if (stillCollectingBaseline) {
     return {
@@ -134,19 +110,21 @@ function getCurrentStatus(samples, options = {}) {
       state: "collecting_baseline",
       cognitiveLoadScore,
       baselineScore: null,
+      baselineSamplesCollected: samples.length,
+      baselineSamplesRequired: baselineSampleCount,
       shouldSilenceNotifications: false,
       updatedAt: latestSample.timestamp
     };
   }
 
   const comparisonBaselineScore = calculateAdaptiveBaseline(samples, {
-    baselineDurationMs,
+    baselineSampleCount,
     baselineEmaAlpha,
     metricWeights,
     includeLatestSample: false
   });
   const updatedBaselineScore = calculateAdaptiveBaseline(samples, {
-    baselineDurationMs,
+    baselineSampleCount,
     baselineEmaAlpha,
     metricWeights,
     includeLatestSample: true
@@ -162,6 +140,8 @@ function getCurrentStatus(samples, options = {}) {
     cognitiveLoadScore,
     baselineScore: updatedBaselineScore,
     comparisonBaselineScore,
+    baselineSamplesCollected: Math.min(samples.length, baselineSampleCount),
+    baselineSamplesRequired: baselineSampleCount,
     shouldSilenceNotifications: isOverloaded,
     updatedAt: latestSample.timestamp
   };

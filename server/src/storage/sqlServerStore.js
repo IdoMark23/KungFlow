@@ -70,6 +70,14 @@ function createSqlServerStore({
       return toSession(result.recordset[0]);
     },
 
+    async deleteSession(accessToken) {
+      const result = await (await request())
+        .input("AccessToken", sql.NVarChar(255), accessToken)
+        .execute("dbo.DeleteSession");
+
+      return Number(result.recordset[0]?.DeletedCount || 0) > 0;
+    },
+
     async saveMetricsSample(sample) {
       const metrics = sample.metrics || {};
       const result = await (await request())

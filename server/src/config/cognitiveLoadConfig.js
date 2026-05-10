@@ -1,5 +1,5 @@
 const cognitiveLoadConfig = {
-  baselineDurationMs: 3 * 60 * 60 * 1000,
+  baselineSampleCount: 180,
   overloadThresholdMultiplier: 1.25,
   baselineEmaAlpha: 0.35,
   metricWeights: {

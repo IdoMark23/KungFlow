@@ -13,6 +13,7 @@ const lastMetricsWindowStatusEl = document.getElementById(
   "lastMetricsWindowStatus"
 );
 const cognitiveLoadStateEl = document.getElementById("cognitiveLoadState");
+const baselineProgressEl = document.getElementById("baselineProgress");
 const notificationSilenceStatusEl = document.getElementById(
   "notificationSilenceStatus"
 );
@@ -104,6 +105,7 @@ function updateServerStatus(lastSample, lastMetricsWindowStatus) {
   if (!lastSample) {
     setStatusValue(serverSyncStatusEl, "Not synced yet", "");
     setStatusValue(cognitiveLoadStateEl, "Unknown", "");
+    setStatusValue(baselineProgressEl, "Unknown", "");
     setStatusValue(notificationSilenceStatusEl, "Not silenced", "");
     serverSyncErrorRowEl.style.display = "none";
     serverSyncErrorEl.textContent = "None";
@@ -120,6 +122,11 @@ function updateServerStatus(lastSample, lastMetricsWindowStatus) {
     cognitiveLoadStateEl,
     formatCognitiveLoadState(lastSample),
     getCognitiveLoadStateClass(lastSample.cognitiveLoadState)
+  );
+  setStatusValue(
+    baselineProgressEl,
+    formatBaselineProgress(lastSample),
+    getBaselineProgressClass(lastSample)
   );
 
   if (lastSample.shouldSilenceNotifications) {
@@ -185,6 +192,33 @@ function formatCognitiveLoadState(sample) {
     .join(" ");
 }
 
+function formatBaselineProgress(sample) {
+  const collected = sample.baselineSamplesCollected;
+  const required = sample.baselineSamplesRequired;
+
+  if (sample.cognitiveLoadPhase === "active") {
+    return "Complete";
+  }
+
+  if (Number.isFinite(collected) && Number.isFinite(required)) {
+    return `${collected} / ${required}`;
+  }
+
+  return "Unknown";
+}
+
+function getBaselineProgressClass(sample) {
+  if (sample.cognitiveLoadPhase === "active") {
+    return "good";
+  }
+
+  if (sample.cognitiveLoadPhase === "baseline") {
+    return "warn";
+  }
+
+  return "";
+}
+
 function getCognitiveLoadStateClass(state) {
   if (state === "normal" || state === "collecting_baseline") {
     return "good";
@@ -247,6 +281,16 @@ changeBgBtn.addEventListener("click", async () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
+  const data = await chrome.storage.local.get("accessToken");
+
+  if (data.accessToken) {
+    try {
+      await kungFlowLogout({ accessToken: data.accessToken });
+    } catch (error) {
+      console.warn("Failed to logout from server:", error);
+    }
+  }
+
   await chrome.storage.local.set({
     isLoggedIn: false,
     accessToken: null,

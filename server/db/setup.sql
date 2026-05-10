@@ -158,6 +158,19 @@ BEGIN
 END;
 GO
 
+CREATE OR ALTER PROCEDURE dbo.DeleteSession
+    @AccessToken NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM dbo.Sessions
+    WHERE AccessToken = @AccessToken;
+
+    SELECT @@ROWCOUNT AS DeletedCount;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.CreateMetricsSample
     @UserId NVARCHAR(64),
     @Platform NVARCHAR(50),

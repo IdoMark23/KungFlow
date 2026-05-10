@@ -31,6 +31,10 @@ function createInMemoryStore() {
       return sessionsByToken.get(accessToken) || null;
     },
 
+    deleteSession(accessToken) {
+      return sessionsByToken.delete(accessToken);
+    },
+
     saveMetricsSample(sample) {
       const existingSamples = metricsByUserId.get(sample.userId) || [];
       existingSamples.push(sample);

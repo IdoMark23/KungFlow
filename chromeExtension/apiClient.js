@@ -68,3 +68,9 @@ async function kungFlowSendMetrics({
 async function kungFlowGetCurrentStatus({ accessToken }) {
   return kungFlowAuthorizedApiRequest("/api/status/current", accessToken);
 }
+
+async function kungFlowLogout({ accessToken }) {
+  return kungFlowAuthorizedApiRequest("/api/auth/logout", accessToken, {
+    method: "POST"
+  });
+}

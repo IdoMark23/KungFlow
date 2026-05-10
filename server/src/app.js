@@ -144,6 +144,19 @@ function createApp({ store = createInMemoryStore() } = {}) {
     });
   }));
 
+  app.post("/api/auth/logout", requireAuth, asyncHandler(async (req, res) => {
+    await app.locals.store.deleteSession(req.session.accessToken);
+
+    logInfo("auth_logout_success", {
+      userId: req.user.id,
+      platform: req.session.platform
+    });
+
+    res.json({
+      loggedOut: true
+    });
+  }));
+
   app.post("/api/metrics", requireAuth, asyncHandler(async (req, res) => {
     const sample = req.body;
 
