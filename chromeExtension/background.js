@@ -6,6 +6,8 @@ const COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES = 5;
 // Temporary for testing.
 // Change to 15 for production.
 const METRICS_COLLECTION_INTERVAL_MINUTES = 1;
+const RAW_HISTORY_RETENTION_MINUTES = 5;
+const MAX_METRICS_HISTORY_ENTRIES = 120;
 const ALARM_COGNITIVE_LOAD_REMINDER = "cognitiveLoadReminder";
 const ALARM_METRICS_COLLECTION = "metricsCollection";
 
@@ -28,7 +30,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 
     mouseMoveHistory: [],
 
-    metricsHistory: []
+    metricsHistory: [],
+    lastMetricsWindowStatus: null
   });
 	//Rotem note
   // experiment - only for MVP user self-report
@@ -117,6 +120,24 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const metricsHistory = data.metricsHistory || [];
     const keyPressHistory = data.keyPressHistory || [];
     const mouseMoveHistory = data.mouseMoveHistory || [];
+    const retainedHistoryStartTime =
+      now - RAW_HISTORY_RETENTION_MINUTES * 60 * 1000;
+    const retainedSwitchHistory = keepRecentHistory(
+      switchHistory,
+      retainedHistoryStartTime
+    );
+    const retainedDelHistory = keepRecentHistory(
+      delHistory,
+      retainedHistoryStartTime
+    );
+    const retainedKeyPressHistory = keepRecentHistory(
+      keyPressHistory,
+      retainedHistoryStartTime
+    );
+    const retainedMouseMoveHistory = keepRecentHistory(
+      mouseMoveHistory,
+      retainedHistoryStartTime
+    );
 
     const tabs = await chrome.tabs.query({});
     const openTabsCount = tabs.length;
@@ -157,6 +178,23 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       mouseSpeed
     };
 
+    if (isInactiveMetricsWindow(sample)) {
+      await chrome.storage.local.set({
+        switchHistory: retainedSwitchHistory,
+        delHistory: retainedDelHistory,
+        keyPressHistory: retainedKeyPressHistory,
+        mouseMoveHistory: retainedMouseMoveHistory,
+        lastMetricsSyncError: null,
+        lastMetricsWindowStatus: {
+          status: "skipped_inactive",
+          timestamp: sample.timestamp
+        }
+      });
+
+      console.log("Skipped inactive metrics window:", sample);
+      return;
+    }
+
     try {
       await kungFlowSendMetrics({
         accessToken: data.accessToken,
@@ -181,20 +219,48 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       sample.shouldSilenceNotifications = status.shouldSilenceNotifications;
       sample.syncedToServer = true;
       sample.serverSyncError = null;
+      sample.windowStatus = "synced";
     } catch (error) {
       sample.syncedToServer = false;
       sample.serverSyncError = error.message;
+      sample.windowStatus = "sync_failed";
       console.warn("Failed to sync metrics sample:", error);
     }
 
     metricsHistory.push(sample);
+    const retainedMetricsHistory = metricsHistory.slice(
+      -MAX_METRICS_HISTORY_ENTRIES
+    );
 
     await chrome.storage.local.set({
-      metricsHistory: metricsHistory,
-      lastMetricsSyncError: sample.serverSyncError
+      switchHistory: retainedSwitchHistory,
+      delHistory: retainedDelHistory,
+      keyPressHistory: retainedKeyPressHistory,
+      mouseMoveHistory: retainedMouseMoveHistory,
+      metricsHistory: retainedMetricsHistory,
+      lastMetricsSyncError: sample.serverSyncError,
+      lastMetricsWindowStatus: {
+        status: sample.windowStatus,
+        timestamp: sample.timestamp
+      }
     });
 
     console.log("New metrics sample:", sample);
   }
 });
 
+function isInactiveMetricsWindow(sample) {
+  return (
+    Number(sample.tabSwitchCount || 0) === 0 &&
+    Number(sample.deleteKeyCount || 0) === 0 &&
+    Number(sample.keyPressCount || 0) === 0 &&
+    Number(sample.typingSpeed || 0) === 0 &&
+    Number(sample.mouseSpeed || 0) === 0
+  );
+}
+
+function keepRecentHistory(history, minEpoch) {
+  return (history || []).filter((item) => {
+    return item && item.epoch && item.epoch >= minEpoch;
+  });
+}

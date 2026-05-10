@@ -153,11 +153,27 @@ function createApp({ store = createInMemoryStore() } = {}) {
       });
     }
 
+    const metrics = sample.metrics || {};
+
+    if (isInactiveMetricsWindow(metrics)) {
+      logInfo("metrics_sample_ignored_inactive", {
+        userId: req.user.id,
+        platform: sample.platform || "extension",
+        metricNames: Object.keys(metrics)
+      });
+
+      return res.status(202).json({
+        accepted: false,
+        ignored: true,
+        reason: "inactive_metrics_window"
+      });
+    }
+
     const savedSample = await app.locals.store.saveMetricsSample({
       userId: req.user.id,
       platform: sample.platform || "extension",
       timestamp: sample.timestamp || new Date().toISOString(),
-      metrics: sample.metrics || {}
+      metrics
     });
 
     logInfo("metrics_sample_received", {
@@ -220,6 +236,16 @@ function toPublicUser(user) {
     username: user.username,
     createdAt: user.createdAt
   };
+}
+
+function isInactiveMetricsWindow(metrics) {
+  return (
+    Number(metrics.tabSwitchCount || 0) === 0 &&
+    Number(metrics.deleteKeyCount || 0) === 0 &&
+    Number(metrics.keyPressCount || 0) === 0 &&
+    Number(metrics.typingSpeed || 0) === 0 &&
+    Number(metrics.mouseSpeed || 0) === 0
+  );
 }
 
 function asyncHandler(handler) {

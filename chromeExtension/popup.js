@@ -9,6 +9,9 @@ const typingSpeedEl = document.getElementById("typingSpeed");
 const mouseSpeedEl = document.getElementById("mouseSpeed");
 const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
 const serverSyncStatusEl = document.getElementById("serverSyncStatus");
+const lastMetricsWindowStatusEl = document.getElementById(
+  "lastMetricsWindowStatus"
+);
 const cognitiveLoadStateEl = document.getElementById("cognitiveLoadState");
 const notificationSilenceStatusEl = document.getElementById(
   "notificationSilenceStatus"
@@ -33,7 +36,8 @@ async function refresh() {
     "switchCount",
     "delCount",
     "bgMode",
-    "metricsHistory"
+    "metricsHistory",
+    "lastMetricsWindowStatus"
   ]);
 
   if (!data.isLoggedIn) {
@@ -65,7 +69,7 @@ async function refresh() {
 
     cognitiveLoadScoreEl.textContent =
       lastSample.cognitiveLoadScore ?? "Not calculated yet";
-    updateServerStatus(lastSample);
+    updateServerStatus(lastSample, data.lastMetricsWindowStatus);
   } else {
     openTabsCountEl.textContent = 0;
     tabSwitchCountEl.textContent = 0;
@@ -74,7 +78,7 @@ async function refresh() {
     typingSpeedEl.textContent = 0;
     mouseSpeedEl.textContent = 0;
     cognitiveLoadScoreEl.textContent = "Not calculated yet";
-    updateServerStatus(null);
+    updateServerStatus(null, data.lastMetricsWindowStatus);
   }
 
   toggleBtn.textContent = isActive ? "Stop Counter" : "Start Counter";
@@ -94,7 +98,9 @@ async function refresh() {
   }
 }
 
-function updateServerStatus(lastSample) {
+function updateServerStatus(lastSample, lastMetricsWindowStatus) {
+  updateLastWindowStatus(lastMetricsWindowStatus);
+
   if (!lastSample) {
     setStatusValue(serverSyncStatusEl, "Not synced yet", "");
     setStatusValue(cognitiveLoadStateEl, "Unknown", "");
@@ -129,6 +135,30 @@ function updateServerStatus(lastSample) {
     serverSyncErrorRowEl.style.display = "none";
     serverSyncErrorEl.textContent = "None";
   }
+}
+
+function updateLastWindowStatus(lastMetricsWindowStatus) {
+  if (!lastMetricsWindowStatus) {
+    setStatusValue(lastMetricsWindowStatusEl, "No sample yet", "");
+    return;
+  }
+
+  if (lastMetricsWindowStatus.status === "skipped_inactive") {
+    setStatusValue(lastMetricsWindowStatusEl, "Skipped inactive", "warn");
+    return;
+  }
+
+  if (lastMetricsWindowStatus.status === "synced") {
+    setStatusValue(lastMetricsWindowStatusEl, "Active sample saved", "good");
+    return;
+  }
+
+  if (lastMetricsWindowStatus.status === "sync_failed") {
+    setStatusValue(lastMetricsWindowStatusEl, "Sync failed", "bad");
+    return;
+  }
+
+  setStatusValue(lastMetricsWindowStatusEl, "Unknown", "");
 }
 
 function setStatusValue(element, text, className) {
