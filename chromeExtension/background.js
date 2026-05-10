@@ -1,3 +1,5 @@
+importScripts("apiClient.js");
+
 console.log("Background service worker loaded");
 
 const COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES = 5;
@@ -96,6 +98,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
     const data = await chrome.storage.local.get([
       "isActive",
+      "isLoggedIn",
+      "accessToken",
       "switchHistory",
       "delHistory",
       "metricsHistory",
@@ -103,6 +107,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     ]);
 
     if (!data.isActive) return;
+    if (!data.isLoggedIn || !data.accessToken) return;
 
     const switchHistory = data.switchHistory || [];
     const delHistory = data.delHistory || [];
@@ -128,7 +133,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const typingSpeed = keyPressCount / collectionWindowMinutes;
 
     const sample = {
-      timestamp: new Date(now).toLocaleString(),
+      timestamp: new Date(now).toISOString(),
       epoch: now,
       openTabsCount: openTabsCount,
       tabSwitchCount: tabSwitchCount,
@@ -137,10 +142,40 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       typingSpeed
     };
 
+    try {
+      await kungFlowSendMetrics({
+        accessToken: data.accessToken,
+        timestamp: sample.timestamp,
+        metrics: {
+          openTabsCount: sample.openTabsCount,
+          tabSwitchCount: sample.tabSwitchCount,
+          deleteKeyCount: sample.deleteKeyCount,
+          keyPressCount: sample.keyPressCount,
+          typingSpeed: sample.typingSpeed
+        }
+      });
+
+      const status = await kungFlowGetCurrentStatus({
+        accessToken: data.accessToken
+      });
+
+      sample.cognitiveLoadScore = status.cognitiveLoadScore;
+      sample.cognitiveLoadState = status.state;
+      sample.cognitiveLoadPhase = status.phase;
+      sample.shouldSilenceNotifications = status.shouldSilenceNotifications;
+      sample.syncedToServer = true;
+      sample.serverSyncError = null;
+    } catch (error) {
+      sample.syncedToServer = false;
+      sample.serverSyncError = error.message;
+      console.warn("Failed to sync metrics sample:", error);
+    }
+
     metricsHistory.push(sample);
 
     await chrome.storage.local.set({
-      metricsHistory: metricsHistory
+      metricsHistory: metricsHistory,
+      lastMetricsSyncError: sample.serverSyncError
     });
 
     console.log("New metrics sample:", sample);

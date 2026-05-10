@@ -38,3 +38,33 @@ async function kungFlowLogin({ email, password, platform = "extension" }) {
     })
   });
 }
+
+async function kungFlowAuthorizedApiRequest(path, accessToken, options = {}) {
+  return kungFlowApiRequest(path, {
+    ...options,
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      ...(options.headers || {})
+    }
+  });
+}
+
+async function kungFlowSendMetrics({
+  accessToken,
+  timestamp,
+  platform = "extension",
+  metrics
+}) {
+  return kungFlowAuthorizedApiRequest("/api/metrics", accessToken, {
+    method: "POST",
+    body: JSON.stringify({
+      timestamp,
+      platform,
+      metrics
+    })
+  });
+}
+
+async function kungFlowGetCurrentStatus({ accessToken }) {
+  return kungFlowAuthorizedApiRequest("/api/status/current", accessToken);
+}
