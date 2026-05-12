@@ -74,3 +74,19 @@ async function kungFlowLogout({ accessToken }) {
     method: "POST"
   });
 }
+
+async function kungFlowChangePassword({
+  accessToken,
+  currentPassword,
+  newPassword,
+  confirmNewPassword
+}) {
+  return kungFlowAuthorizedApiRequest("/api/auth/change-password", accessToken, {
+    method: "POST",
+    body: JSON.stringify({
+      currentPassword,
+      newPassword,
+      confirmNewPassword
+    })
+  });
+}

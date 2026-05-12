@@ -4,85 +4,178 @@
 <head>
   <style>
     body {
-      width: 300px;
+      width: 360px;
       margin: 0;
+      box-sizing: border-box;
+      border: 1px solid #93c5fd;
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #e0f7ff, #f8fbff);
       color: #1f2937;
     }
 
     .container {
-      padding: 16px;
+      padding: 10px;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
 
     .app-logo {
-      display: block;
-      width: 100%;
-      height: 56px;
-      margin: 0 auto 10px;
+      width: 38px;
+      height: 32px;
       object-fit: contain;
+      flex: 0 0 auto;
     }
 
     h3 {
-      margin: 0 0 12px;
-      font-size: 18px;
+      margin: 0;
+      font-size: 17px;
       text-align: center;
+      white-space: nowrap;
     }
 
     .card {
       background: white;
       border-radius: 14px;
-      padding: 16px;
+      padding: 9px;
       text-align: center;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .count {
-      font-size: 42px;
+      font-size: 24px;
       font-weight: bold;
       color: #2563eb;
-      margin: 8px 0;
+      margin: 2px 0 0;
     }
 
     .sub-count {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: bold;
       color: #7c3aed;
-      margin: 4px 0 8px;
+      margin: 1px 0 0;
     }
 
     .label {
-      font-size: 13px;
+      font-size: 10px;
       color: #6b7280;
+      line-height: 1.15;
     }
 
     .section-title {
-      margin-top: 14px;
-      margin-bottom: 8px;
-      font-size: 14px;
+      margin-top: 6px;
+      margin-bottom: 5px;
+      font-size: 12px;
       font-weight: bold;
       color: #374151;
     }
 
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+      padding: 4px;
+      min-height: 37px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      background: #dbeafe;
+    }
+
+    .tabs.hidden {
+      display: none;
+    }
+
+    .back-tabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tab-button {
+      border-radius: 9px;
+      padding: 8px;
+      margin: 0;
+      background: transparent;
+      color: #1e40af;
+      font-size: 13px;
+    }
+
+    .tab-button.active-tab {
+      background: white;
+      color: #111827;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active-panel {
+      display: block;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .metric-tile {
+      min-height: 39px;
+      padding: 5px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .metric-tile.wide {
+      grid-column: 1 / -1;
+      min-height: 38px;
+    }
+
     .status {
       font-size: 13px;
-      margin-top: 12px;
+      margin-top: 8px;
       font-weight: bold;
     }
 
     .server-status {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-top: 10px;
       text-align: left;
     }
 
     .status-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      display: grid;
+      gap: 2px;
+      align-content: start;
+      min-height: 44px;
+      padding: 7px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f8fafc;
       font-size: 12px;
       line-height: 1.3;
     }
@@ -94,7 +187,7 @@
     .status-value {
       color: #111827;
       font-weight: bold;
-      text-align: right;
+      text-align: left;
       word-break: break-word;
     }
 
@@ -111,11 +204,202 @@
     }
 
     .user-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      border: none;
+      background: transparent;
       color: #6b7280;
+      cursor: pointer;
       font-size: 12px;
-      margin-bottom: 10px;
-      text-align: center;
+      font-weight: normal;
+      padding: 4px 0;
+      text-align: right;
       word-break: break-word;
+      min-width: 0;
+      max-width: 170px;
+    }
+
+    .user-email-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-menu-arrow {
+      flex: 0 0 auto;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #6b7280;
+      transition: transform 0.15s ease;
+    }
+
+    .user-row[aria-expanded="true"] .user-menu-arrow {
+      transform: rotate(180deg);
+    }
+
+    .user-menu-wrap {
+      position: relative;
+      min-width: 0;
+    }
+
+    .user-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 5;
+      min-width: 156px;
+      margin-top: 6px;
+      padding: 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+    }
+
+    .user-menu.open {
+      display: block;
+    }
+
+    .menu-button {
+      background: transparent;
+      color: #374151;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .menu-button:hover {
+      background: #f3f4f6;
+      opacity: 1;
+    }
+
+    .menu-divider {
+      height: 1px;
+      margin: 6px 4px;
+      background: #e5e7eb;
+    }
+
+    .menu-spacer {
+      height: 4px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active-screen {
+      display: block;
+    }
+
+    .screen-header {
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .back-button {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .nav-back-button {
+      justify-self: stretch;
+      min-width: 0;
+      margin-bottom: 0;
+      background: white;
+      color: #111827;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+    }
+
+    .back-icon {
+      width: 7px;
+      height: 7px;
+      border-left: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+    }
+
+    .screen-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .field-label {
+      display: grid;
+      gap: 5px;
+      color: #374151;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 9px;
+      color: #111827;
+      font-size: 13px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .primary-action {
+      background: #2563eb;
+      color: white;
+    }
+
+    .policy-text {
+      max-height: 280px;
+      overflow: auto;
+      color: #374151;
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .form-message {
+      display: none;
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .form-message.visible {
+      display: block;
+    }
+
+    .form-message.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .form-message.error {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .active {
@@ -130,31 +414,131 @@
       width: 100%;
       border: none;
       border-radius: 10px;
-      padding: 10px;
-      margin-top: 8px;
+      padding: 9px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
     }
 
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .setting-options {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 34px;
+      padding: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .toggle-label {
+      color: #374151;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .toggle-control {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex: 0 0 auto;
+      margin: 0;
+      padding: 0;
+      border-radius: 999px;
+      background: #d1d5db;
+      transition: background 0.15s ease;
+    }
+
+    .toggle-control[aria-pressed="true"] {
+      background: #2563eb;
+    }
+
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease;
+    }
+
+    .toggle-control[aria-pressed="true"] .toggle-knob {
+      transform: translateX(20px);
+    }
+
     #toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       background: #2563eb;
       color: white;
+    }
+
+    .record-footer {
+      margin-top: 8px;
+    }
+
+    .record-button {
+      min-height: 38px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+    }
+
+    .record-icon {
+      width: 14px;
+      height: 14px;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .record-icon::before {
+      content: "";
+      position: absolute;
+      top: 1px;
+      left: 3px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 9px solid currentColor;
+    }
+
+    #toggle[aria-pressed="true"] .record-icon {
+      display: inline-flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    #toggle[aria-pressed="true"] .record-icon::before,
+    #toggle[aria-pressed="true"] .record-icon::after {
+      content: "";
+      position: static;
+      width: 4px;
+      height: 14px;
+      border: none;
+      border-radius: 1px;
+      background: currentColor;
     }
 
     #reset {
       background: #e5e7eb;
       color: #111827;
-    }
-
-    #changeBg {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    #toggleReminder {
-      background: #eef2ff;
-      color: #3730a3;
     }
 
     #logout {
@@ -169,86 +553,219 @@
     hr {
       border: none;
       border-top: 1px solid #e5e7eb;
-      margin: 14px 0;
+      margin: 7px 0;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <img class="app-logo" src="assets/logo.png" alt="KungFlow logo">
-    <h3>KungFlow Metrics</h3>
-    <div id="userEmail" class="user-row"></div>
-
-    <div class="card">
-      <div class="section-title">Total counters</div>
-
-      <div class="label">Total tab switches</div>
-      <div id="count" class="count">0</div>
-
-      <div class="label">Total Delete/Backspace</div>
-      <div id="delCount" class="count">0</div>
-
-      <hr>
-
-      <div class="section-title">Last collection window</div>
-
-      <div class="label">Open tabs now</div>
-      <div id="openTabsCount" class="sub-count">0</div>
-
-      <div class="label">Tab switches in current window</div>
-      <div id="tabSwitchCount" class="sub-count">0</div>
-
-      <div class="label">Key presses in current window</div>
-      <div id="keyPressCount" class="sub-count">0</div>
-
-      <div class="label">Delete/Backspace in current window</div>
-      <div id="deleteKeyCount" class="sub-count">0</div>
-
-      <div class="label">Typing speed</div>
-      <div id="typingSpeed" class="sub-count">0</div>
-
-      <div class="label">Mouse speed</div>
-      <div id="mouseSpeed" class="sub-count">0</div>
-
-      <div class="label">Cognitive load score</div>
-      <div id="cognitiveLoadScore" class="sub-count">Not calculated yet</div>
-
-      <div class="server-status">
-        <div class="status-row">
-          <span class="status-label">Server sync</span>
-          <span id="serverSyncStatus" class="status-value">Not synced yet</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Last window</span>
-          <span id="lastMetricsWindowStatus" class="status-value">No sample yet</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Cognitive load</span>
-          <span id="cognitiveLoadState" class="status-value">Unknown</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Baseline</span>
-          <span id="baselineProgress" class="status-value">Unknown</span>
-        </div>
-        <div class="status-row">
-          <span class="status-label">Notifications</span>
-          <span id="notificationSilenceStatus" class="status-value">Not silenced</span>
-        </div>
-        <div id="serverSyncErrorRow" class="status-row">
-          <span class="status-label">Sync error</span>
-          <span id="serverSyncError" class="status-value bad">None</span>
+    <div class="app-header">
+      <div class="brand-row">
+        <img class="app-logo" src="assets/icon128.png" alt="KungFlow logo">
+        <h3>KungFlow</h3>
+      </div>
+      <div class="user-menu-wrap">
+        <button id="userEmail" class="user-row" type="button" aria-haspopup="menu" aria-expanded="false">
+          <span id="userEmailText" class="user-email-text"></span>
+          <span class="user-menu-arrow" aria-hidden="true"></span>
+        </button>
+        <div id="userMenu" class="user-menu" role="menu">
+          <button id="changePasswordMenuItem" class="menu-button" type="button" role="menuitem">Change Password</button>
+          <div class="menu-divider" role="separator"></div>
+          <button id="settingMenuItem" class="menu-button" type="button" role="menuitem">Setting</button>
+          <div class="menu-divider" role="separator"></div>
+          <button id="privacyPolicyMenuItem" class="menu-button" type="button" role="menuitem">Privacy Policy</button>
+          <div class="menu-spacer" aria-hidden="true"></div>
+          <button id="logout" type="button" role="menuitem">Logout</button>
         </div>
       </div>
-
-      <div id="status" class="status inactive">Inactive</div>
     </div>
 
-    <button id="toggle">Start Counter</button>
-    <button id="toggleReminder">Disable Cognitive Load Popup</button>
-    <button id="reset">Reset</button>
-    <button id="changeBg">Change Background</button>
-    <button id="logout">Logout</button>
+    <div id="mainNavigation" class="tabs" role="tablist" aria-label="Popup sections">
+      <button id="statisticTab" class="tab-button active-tab" type="button" role="tab" aria-selected="true"
+        aria-controls="statisticPanel">Statistic</button>
+      <button id="settingTab" class="tab-button" type="button" role="tab" aria-selected="false"
+        aria-controls="settingPanel">Status</button>
+    </div>
+
+    <div id="backNavigation" class="tabs back-tabs hidden">
+      <button id="screenBackButton" class="back-button nav-back-button" type="button" aria-label="Back">
+        <span class="back-icon" aria-hidden="true"></span>
+        Back
+      </button>
+    </div>
+
+    <div id="mainScreen" class="screen active-screen">
+      <div class="card">
+        <div id="statisticPanel" class="tab-panel active-panel" role="tabpanel" aria-labelledby="statisticTab">
+          <div class="section-title">Total counters</div>
+
+          <div class="metrics-grid">
+            <div class="metric-tile">
+              <div class="label">Total tab switches</div>
+              <div id="count" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Total Delete/Backspace</div>
+              <div id="delCount" class="sub-count">0</div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="section-title">Last collection window</div>
+
+          <div class="metrics-grid">
+            <div class="metric-tile">
+              <div class="label">Open tabs now</div>
+              <div id="openTabsCount" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Tab switches</div>
+              <div id="tabSwitchCount" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Key presses</div>
+              <div id="keyPressCount" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Delete/Backspace</div>
+              <div id="deleteKeyCount" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Typing speed</div>
+              <div id="typingSpeed" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile">
+              <div class="label">Mouse speed</div>
+              <div id="mouseSpeed" class="sub-count">0</div>
+            </div>
+
+            <div class="metric-tile wide">
+              <div class="label">Cognitive load score</div>
+              <div id="cognitiveLoadScore" class="sub-count">Not calculated yet</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="settingPanel" class="tab-panel" role="tabpanel" aria-labelledby="settingTab">
+          <div class="server-status">
+            <div class="status-row">
+              <span class="status-label">Last window</span>
+              <span id="lastMetricsWindowStatus" class="status-value">No sample yet</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Cognitive load</span>
+              <span id="cognitiveLoadState" class="status-value">Unknown</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Baseline</span>
+              <span id="baselineProgress" class="status-value">Unknown</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Notifications</span>
+              <span id="notificationSilenceStatus" class="status-value">Not silenced</span>
+            </div>
+            <div id="serverSyncErrorRow" class="status-row">
+              <span class="status-label">Connection issue</span>
+              <span id="serverSyncError" class="status-value bad">None</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingScreen" class="screen">
+      <div class="card">
+        <div class="screen-header">
+          <div class="screen-title">Setting</div>
+        </div>
+
+        <div class="setting-options">
+          <div class="toggle-row">
+            <button id="toggleReminder" class="toggle-control" type="button" aria-pressed="true"
+              aria-label="Toggle Load Popup">
+              <span class="toggle-knob" aria-hidden="true"></span>
+            </button>
+            <span class="toggle-label">Load Popup</span>
+          </div>
+
+          <div class="toggle-row">
+            <button id="changeBg" class="toggle-control" type="button" aria-pressed="false"
+              aria-label="Toggle color mode">
+              <span class="toggle-knob" aria-hidden="true"></span>
+            </button>
+            <span id="bgModeLabel" class="toggle-label">Light Mode</span>
+          </div>
+        </div>
+
+        <div class="actions-grid">
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="changePasswordScreen" class="screen">
+      <div class="card">
+        <div class="screen-header">
+          <div class="screen-title">Change password</div>
+        </div>
+
+        <form id="changePasswordForm" class="form-grid">
+          <div id="changePasswordMessage" class="form-message"></div>
+
+          <label class="field-label">
+            Current Password
+            <input id="currentPassword" type="password" autocomplete="current-password">
+          </label>
+
+          <label class="field-label">
+            New Password
+            <input id="newPassword" type="password" autocomplete="new-password">
+          </label>
+
+          <label class="field-label">
+            Confirm New Password
+            <input id="confirmNewPassword" type="password" autocomplete="new-password">
+          </label>
+
+          <button class="primary-action" type="submit">Save Password</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="privacyPolicyScreen" class="screen">
+      <div class="card">
+        <div class="screen-header">
+          <div class="screen-title">Privacy Policy</div>
+        </div>
+
+        <div class="policy-text">
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer non lorem vitae neque faucibus
+            sollicitudin. Donec sit amet sem a arcu cursus pretium.</p>
+          <p>Praesent sed magna at ipsum luctus gravida. Nulla facilisi. Sed vitae nibh non tortor viverra feugiat.
+            Curabitur dictum, lectus a feugiat posuere, lorem massa consequat eros, non facilisis neque augue at
+            lectus.</p>
+          <p>Aliquam erat volutpat. Suspendisse potenti. Integer blandit, mi sed commodo luctus, justo urna efficitur
+            sapien, at mattis mi mi non risus.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="record-footer">
+      <button id="toggle" class="record-button" type="button" aria-pressed="false">
+        <span class="record-icon" aria-hidden="true"></span>
+        <span id="recordButtonLabel">Start Record</span>
+      </button>
+    </div>
+
   </div>
 
   <script src="apiClient.js"></script>

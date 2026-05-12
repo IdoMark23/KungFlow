@@ -157,6 +157,52 @@ function createApp({ store = createInMemoryStore() } = {}) {
     });
   }));
 
+  app.post("/api/auth/change-password", requireAuth, asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body || {};
+
+    if (!currentPassword || typeof currentPassword !== "string") {
+      return res.status(400).json({
+        error: "currentPassword is required."
+      });
+    }
+
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+      return res.status(400).json({
+        error: "newPassword must be at least 8 characters."
+      });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({
+        error: "confirmNewPassword must match newPassword."
+      });
+    }
+
+    if (!(await verifyPassword(currentPassword, req.user.passwordHash))) {
+      logWarn("auth_change_password_failed", {
+        userId: req.user.id
+      });
+
+      return res.status(401).json({
+        error: "Current password is incorrect."
+      });
+    }
+
+    const updatedUser = await app.locals.store.updateUserPassword(
+      req.user.id,
+      await hashPassword(newPassword)
+    );
+
+    logInfo("auth_change_password_success", {
+      userId: req.user.id
+    });
+
+    res.json({
+      passwordChanged: true,
+      user: toPublicUser(updatedUser)
+    });
+  }));
+
   app.post("/api/metrics", requireAuth, asyncHandler(async (req, res) => {
     const sample = req.body;
 

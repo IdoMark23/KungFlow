@@ -21,6 +21,24 @@ function createInMemoryStore() {
       return usersById.get(userId) || null;
     },
 
+    updateUserPassword(userId, passwordHash) {
+      const user = usersById.get(userId);
+
+      if (!user) {
+        return null;
+      }
+
+      const updatedUser = {
+        ...user,
+        passwordHash
+      };
+
+      usersById.set(userId, updatedUser);
+      usersByEmail.set(updatedUser.email, updatedUser);
+
+      return updatedUser;
+    },
+
     saveSession(session) {
       sessionsByToken.set(session.accessToken, session);
 

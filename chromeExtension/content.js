@@ -2,11 +2,58 @@ console.log("content.js loaded");
 
 const MOUSE_MOVE_SAMPLE_INTERVAL_MS = 100;
 let lastMouseSample = null;
+let extensionContextValid = true;
+
+function isExtensionContextError(error) {
+  return error && String(error.message || error).includes("Extension context invalidated");
+}
+
+async function getLocalStorage(keys) {
+  if (
+    !extensionContextValid ||
+    typeof chrome === "undefined" ||
+    !chrome.storage?.local
+  ) {
+    return null;
+  }
+
+  try {
+    return await chrome.storage.local.get(keys);
+  } catch (error) {
+    if (isExtensionContextError(error)) {
+      extensionContextValid = false;
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+async function setLocalStorage(updates) {
+  if (
+    !extensionContextValid ||
+    typeof chrome === "undefined" ||
+    !chrome.storage?.local
+  ) {
+    return;
+  }
+
+  try {
+    await chrome.storage.local.set(updates);
+  } catch (error) {
+    if (isExtensionContextError(error)) {
+      extensionContextValid = false;
+      return;
+    }
+
+    throw error;
+  }
+}
 
 window.addEventListener(
   "keydown",
   async (event) => {
-    const data = await chrome.storage.local.get([
+    const data = await getLocalStorage([
       "isActive",
       "keyPressCount",
       "keyPressHistory",
@@ -14,6 +61,7 @@ window.addEventListener(
       "delHistory"
     ]);
 
+    if (!data) return;
     if (!data.isActive) return;
 
     const now = Date.now();
@@ -43,7 +91,7 @@ window.addEventListener(
       updates.delHistory = delHistory;
     }
 
-    await chrome.storage.local.set(updates);
+    await setLocalStorage(updates);
   },
   true
 );
@@ -51,11 +99,12 @@ window.addEventListener(
 window.addEventListener(
   "mousemove",
   async (event) => {
-    const data = await chrome.storage.local.get([
+    const data = await getLocalStorage([
       "isActive",
       "mouseMoveHistory"
     ]);
 
+    if (!data) return;
     if (!data.isActive) return;
 
     const now = Date.now();
@@ -96,7 +145,7 @@ window.addEventListener(
       distancePixels
     });
 
-    await chrome.storage.local.set({
+    await setLocalStorage({
       mouseMoveHistory
     });
   },

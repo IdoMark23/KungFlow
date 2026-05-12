@@ -128,6 +128,23 @@ BEGIN
 END;
 GO
 
+CREATE OR ALTER PROCEDURE dbo.UpdateUserPassword
+    @Id NVARCHAR(64),
+    @PasswordHash NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dbo.Users
+    SET PasswordHash = @PasswordHash
+    WHERE Id = @Id;
+
+    SELECT Id, Email, Username, PasswordHash, CreatedAt
+    FROM dbo.Users
+    WHERE Id = @Id;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.CreateSession
     @AccessToken NVARCHAR(255),
     @UserId NVARCHAR(64),

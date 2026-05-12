@@ -3,13 +3,13 @@ const sql = require("mssql/msnodesqlv8");
 function createSqlServerStore({
   connectionString = process.env.SQLSERVER_CONNECTION_STRING
 } = {}) {
-  const server = process.env.SQLSERVER_SERVER || ".\\SQLEXPRESS";
+  const server = process.env.SQLSERVER_SERVER || "(localdb)\\MSSQLLocalDB";
   const database = process.env.SQLSERVER_DATABASE || "KungFlowDB";
   const driver = process.env.SQLSERVER_DRIVER || "ODBC Driver 17 for SQL Server";
   const connectionConfig = {
     connectionString:
       connectionString ||
-      `Driver={${driver}};Server=${server};Database=${database};Trusted_Connection=Yes;Encrypt=no;`
+      `Driver={${driver}};Server=${server};Database=${database};Trusted_Connection=Yes;Encrypt=no;TrustServerCertificate=yes;`
   };
   let poolPromise = null;
 
@@ -47,6 +47,15 @@ function createSqlServerStore({
       const result = await (await request())
         .input("Id", sql.NVarChar(64), userId)
         .execute("dbo.GetUserById");
+
+      return toUser(result.recordset[0]);
+    },
+
+    async updateUserPassword(userId, passwordHash) {
+      const result = await (await request())
+        .input("Id", sql.NVarChar(64), userId)
+        .input("PasswordHash", sql.NVarChar(255), passwordHash)
+        .execute("dbo.UpdateUserPassword");
 
       return toUser(result.recordset[0]);
     },

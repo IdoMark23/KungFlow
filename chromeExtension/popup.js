@@ -8,7 +8,6 @@ const deleteKeyCountEl = document.getElementById("deleteKeyCount");
 const typingSpeedEl = document.getElementById("typingSpeed");
 const mouseSpeedEl = document.getElementById("mouseSpeed");
 const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
-const serverSyncStatusEl = document.getElementById("serverSyncStatus");
 const lastMetricsWindowStatusEl = document.getElementById(
   "lastMetricsWindowStatus"
 );
@@ -21,11 +20,34 @@ const serverSyncErrorRowEl = document.getElementById("serverSyncErrorRow");
 const serverSyncErrorEl = document.getElementById("serverSyncError");
 
 const userEmailEl = document.getElementById("userEmail");
+const userEmailTextEl = document.getElementById("userEmailText");
+const userMenuEl = document.getElementById("userMenu");
+const mainNavigationEl = document.getElementById("mainNavigation");
+const backNavigationEl = document.getElementById("backNavigation");
+const screenBackButtonEl = document.getElementById("screenBackButton");
+const mainScreenEl = document.getElementById("mainScreen");
+const settingScreenEl = document.getElementById("settingScreen");
+const changePasswordScreenEl = document.getElementById("changePasswordScreen");
+const privacyPolicyScreenEl = document.getElementById("privacyPolicyScreen");
 const statusEl = document.getElementById("status");
+const statisticTabBtn = document.getElementById("statisticTab");
+const settingTabBtn = document.getElementById("settingTab");
+const statisticPanelEl = document.getElementById("statisticPanel");
+const settingPanelEl = document.getElementById("settingPanel");
 const toggleBtn = document.getElementById("toggle");
+const recordButtonLabelEl = document.getElementById("recordButtonLabel");
 const toggleReminderBtn = document.getElementById("toggleReminder");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
+const bgModeLabelEl = document.getElementById("bgModeLabel");
+const changePasswordMenuItemBtn = document.getElementById("changePasswordMenuItem");
+const settingMenuItemBtn = document.getElementById("settingMenuItem");
+const privacyPolicyMenuItemBtn = document.getElementById("privacyPolicyMenuItem");
+const changePasswordFormEl = document.getElementById("changePasswordForm");
+const currentPasswordEl = document.getElementById("currentPassword");
+const newPasswordEl = document.getElementById("newPassword");
+const confirmNewPasswordEl = document.getElementById("confirmNewPassword");
+const changePasswordMessageEl = document.getElementById("changePasswordMessage");
 const logoutBtn = document.getElementById("logout");
 
 async function refresh() {
@@ -48,7 +70,7 @@ async function refresh() {
 
   const isActive = data.isActive || false;
   const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
-  userEmailEl.textContent = data.user?.email || "Logged in";
+  userEmailTextEl.textContent = data.user?.email || "Logged in";
 
   countEl.textContent = data.switchCount || 0;
   delCountEl.textContent = data.delCount || 0;
@@ -68,8 +90,10 @@ async function refresh() {
     const mouseSpeed = lastSample.mouseSpeed ?? 0;
     mouseSpeedEl.textContent = Number(mouseSpeed).toFixed(1);
 
-    cognitiveLoadScoreEl.textContent =
-      lastSample.cognitiveLoadScore ?? "Not calculated yet";
+    cognitiveLoadScoreEl.textContent = formatNumber(
+      lastSample.cognitiveLoadScore,
+      "Not calculated yet"
+    );
     updateServerStatus(lastSample, data.lastMetricsWindowStatus);
   } else {
     openTabsCountEl.textContent = 0;
@@ -82,15 +106,15 @@ async function refresh() {
     updateServerStatus(null, data.lastMetricsWindowStatus);
   }
 
-  toggleBtn.textContent = isActive ? "Stop Counter" : "Start Counter";
-  toggleReminderBtn.textContent = reminderEnabled
-    ? "Disable Cognitive Load Popup"
-    : "Enable Cognitive Load Popup";
+  toggleBtn.setAttribute("aria-pressed", String(isActive));
+  recordButtonLabelEl.textContent = isActive ? "Stop Record" : "Start Record";
+  toggleReminderBtn.setAttribute("aria-pressed", String(reminderEnabled));
 
-  statusEl.textContent = isActive ? "Active" : "Inactive";
-  statusEl.className = isActive ? "status active" : "status inactive";
+  const isDarkMode = data.bgMode === "dark";
+  changeBgBtn.setAttribute("aria-pressed", String(isDarkMode));
+  bgModeLabelEl.textContent = isDarkMode ? "Dark Mode" : "Light Mode";
 
-  if (data.bgMode === "dark") {
+  if (isDarkMode) {
     document.body.style.background = "linear-gradient(135deg, #111827, #1f2937)";
     document.body.style.color = "white";
   } else {
@@ -103,19 +127,12 @@ function updateServerStatus(lastSample, lastMetricsWindowStatus) {
   updateLastWindowStatus(lastMetricsWindowStatus);
 
   if (!lastSample) {
-    setStatusValue(serverSyncStatusEl, "Not synced yet", "");
     setStatusValue(cognitiveLoadStateEl, "Unknown", "");
     setStatusValue(baselineProgressEl, "Unknown", "");
     setStatusValue(notificationSilenceStatusEl, "Not silenced", "");
     serverSyncErrorRowEl.style.display = "none";
     serverSyncErrorEl.textContent = "None";
     return;
-  }
-
-  if (lastSample.syncedToServer) {
-    setStatusValue(serverSyncStatusEl, "Synced", "good");
-  } else {
-    setStatusValue(serverSyncStatusEl, "Not synced", "bad");
   }
 
   setStatusValue(
@@ -135,13 +152,19 @@ function updateServerStatus(lastSample, lastMetricsWindowStatus) {
     setStatusValue(notificationSilenceStatusEl, "Not silenced", "good");
   }
 
-  if (lastSample.serverSyncError) {
-    serverSyncErrorRowEl.style.display = "flex";
-    serverSyncErrorEl.textContent = lastSample.serverSyncError;
+  if (!lastSample.syncedToServer || lastSample.serverSyncError) {
+    serverSyncErrorRowEl.style.display = "grid";
+    serverSyncErrorEl.textContent =
+      lastSample.serverSyncError || "Latest metrics were not saved.";
   } else {
     serverSyncErrorRowEl.style.display = "none";
     serverSyncErrorEl.textContent = "None";
   }
+}
+
+function formatNumber(value, fallback) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue.toFixed(2) : fallback;
 }
 
 function updateLastWindowStatus(lastMetricsWindowStatus) {
@@ -231,6 +254,128 @@ function getCognitiveLoadStateClass(state) {
   return "";
 }
 
+function activateTab(tabName) {
+  const isStatisticTab = tabName === "statistic";
+
+  statisticTabBtn.classList.toggle("active-tab", isStatisticTab);
+  settingTabBtn.classList.toggle("active-tab", !isStatisticTab);
+  statisticPanelEl.classList.toggle("active-panel", isStatisticTab);
+  settingPanelEl.classList.toggle("active-panel", !isStatisticTab);
+
+  statisticTabBtn.setAttribute("aria-selected", String(isStatisticTab));
+  settingTabBtn.setAttribute("aria-selected", String(!isStatisticTab));
+}
+
+statisticTabBtn.addEventListener("click", () => {
+  activateTab("statistic");
+});
+
+settingTabBtn.addEventListener("click", () => {
+  activateTab("setting");
+});
+
+function closeUserMenu() {
+  userMenuEl.classList.remove("open");
+  userEmailEl.setAttribute("aria-expanded", "false");
+}
+
+userEmailEl.addEventListener("click", (event) => {
+  event.stopPropagation();
+  const isOpen = userMenuEl.classList.toggle("open");
+  userEmailEl.setAttribute("aria-expanded", String(isOpen));
+});
+
+document.addEventListener("click", (event) => {
+  if (!userMenuEl.contains(event.target) && event.target !== userEmailEl) {
+    closeUserMenu();
+  }
+});
+
+function showScreen(screenName) {
+  const isMainScreen = screenName === "main";
+
+  mainNavigationEl.classList.toggle("hidden", !isMainScreen);
+  backNavigationEl.classList.toggle("hidden", isMainScreen);
+  mainScreenEl.classList.toggle("active-screen", screenName === "main");
+  settingScreenEl.classList.toggle("active-screen", screenName === "setting");
+  changePasswordScreenEl.classList.toggle(
+    "active-screen",
+    screenName === "changePassword"
+  );
+  privacyPolicyScreenEl.classList.toggle(
+    "active-screen",
+    screenName === "privacyPolicy"
+  );
+
+  if (screenName !== "changePassword") {
+    clearChangePasswordMessage();
+  }
+}
+
+function setChangePasswordMessage(message, className) {
+  changePasswordMessageEl.textContent = message;
+  changePasswordMessageEl.className = `form-message visible ${className}`;
+}
+
+function clearChangePasswordMessage() {
+  changePasswordMessageEl.textContent = "";
+  changePasswordMessageEl.className = "form-message";
+}
+
+changePasswordMenuItemBtn.addEventListener("click", () => {
+  closeUserMenu();
+  showScreen("changePassword");
+});
+
+settingMenuItemBtn.addEventListener("click", () => {
+  closeUserMenu();
+  showScreen("setting");
+});
+
+privacyPolicyMenuItemBtn.addEventListener("click", () => {
+  closeUserMenu();
+  showScreen("privacyPolicy");
+});
+
+screenBackButtonEl.addEventListener("click", () => {
+  showScreen("main");
+});
+
+changePasswordFormEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearChangePasswordMessage();
+
+  const currentPassword = currentPasswordEl.value;
+  const newPassword = newPasswordEl.value;
+  const confirmNewPassword = confirmNewPasswordEl.value;
+
+  if (newPassword !== confirmNewPassword) {
+    setChangePasswordMessage("New passwords do not match.", "error");
+    return;
+  }
+
+  const data = await chrome.storage.local.get("accessToken");
+
+  if (!data.accessToken) {
+    setChangePasswordMessage("You must be logged in to change password.", "error");
+    return;
+  }
+
+  try {
+    await kungFlowChangePassword({
+      accessToken: data.accessToken,
+      currentPassword,
+      newPassword,
+      confirmNewPassword
+    });
+
+    changePasswordFormEl.reset();
+    setChangePasswordMessage("Password changed successfully.", "success");
+  } catch (error) {
+    setChangePasswordMessage(error.message, "error");
+  }
+});
+
 toggleBtn.addEventListener("click", async () => {
   const data = await chrome.storage.local.get("isActive");
 
@@ -281,6 +426,7 @@ changeBgBtn.addEventListener("click", async () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
+  closeUserMenu();
   const data = await chrome.storage.local.get("accessToken");
 
   if (data.accessToken) {
