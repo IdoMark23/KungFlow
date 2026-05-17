@@ -1,0 +1,177 @@
+<Window x:Class="KungFlow.Desktop.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KungFlow"
+        Width="360"
+        Height="470"
+        MinWidth="360"
+        MinHeight="470"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#E0F7FF">
+  <Window.Resources>
+    <LinearGradientBrush x:Key="AppBackground" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#E0F7FF" Offset="0" />
+      <GradientStop Color="#F8FBFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="Height" Value="38" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="#2563EB" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Opacity" Value="0.85" />
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.6" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+      <Setter Property="Background" Value="#EEF2FF" />
+      <Setter Property="Foreground" Value="#3730A3" />
+    </Style>
+
+    <Style TargetType="TextBox">
+      <Setter Property="Height" Value="38" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="#111827" />
+      <Setter Property="BorderBrush" Value="#D1D5DB" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style TargetType="PasswordBox">
+      <Setter Property="Height" Value="38" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="#111827" />
+      <Setter Property="BorderBrush" Value="#D1D5DB" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+  </Window.Resources>
+
+  <Grid Background="{StaticResource AppBackground}">
+    <Grid x:Name="LoginView" Margin="16">
+      <StackPanel VerticalAlignment="Center">
+        <Image Source="Assets/icon128.png"
+               Width="72"
+               Height="56"
+               Stretch="Uniform"
+               Margin="0,0,0,10" />
+
+        <TextBlock Text="KungFlow Login"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="#1F2937"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,6" />
+
+        <TextBlock Text="Sign in to sync KungFlow metrics"
+                   FontSize="13"
+                   Foreground="#6B7280"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,16" />
+
+        <Border Background="White"
+                CornerRadius="14"
+                Padding="16">
+          <Border.Effect>
+            <DropShadowEffect Color="#33000000" BlurRadius="14" ShadowDepth="4" Opacity="0.35" />
+          </Border.Effect>
+
+          <StackPanel>
+            <TextBlock Text="Email"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#374151"
+                       Margin="0,0,0,6" />
+            <TextBox x:Name="EmailTextBox"
+                     Text="user@example.com"
+                     Margin="0,0,0,12" />
+
+            <TextBlock Text="Password"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#374151"
+                       Margin="0,0,0,6" />
+            <PasswordBox x:Name="PasswordBox"
+                         Margin="0,0,0,12" />
+
+            <Button x:Name="LoginButton"
+                    Content="Login"
+                    Style="{StaticResource PrimaryButton}"
+                    Margin="0,4,0,0"
+                    Click="LoginButton_Click" />
+
+            <TextBlock x:Name="MessageTextBlock"
+                       MinHeight="16"
+                       FontSize="12"
+                       TextAlignment="Center"
+                       Margin="0,10,0,0" />
+
+            <TextBlock Text="Requires the local KungFlow server on port 3000."
+                       FontSize="12"
+                       Foreground="#6B7280"
+                       TextAlignment="Center"
+                       Margin="0,12,0,0" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Grid>
+
+    <Grid x:Name="LoggedInView" Margin="16" Visibility="Collapsed">
+      <StackPanel VerticalAlignment="Center">
+        <Image Source="Assets/icon128.png"
+               Width="72"
+               Height="56"
+               Stretch="Uniform"
+               Margin="0,0,0,12" />
+
+        <Border Background="White"
+                CornerRadius="14"
+                Padding="18">
+          <Border.Effect>
+            <DropShadowEffect Color="#33000000" BlurRadius="14" ShadowDepth="4" Opacity="0.35" />
+          </Border.Effect>
+
+          <StackPanel>
+            <TextBlock Text="KungFlow Desktop"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="#1F2937"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8" />
+
+            <TextBlock x:Name="LoggedInEmailTextBlock"
+                       FontSize="13"
+                       Foreground="#6B7280"
+                       TextAlignment="Center"
+                       Margin="0,0,0,16" />
+
+            <Button Content="Logout"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="LogoutButton_Click" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>

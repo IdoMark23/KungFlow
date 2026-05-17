@@ -8,6 +8,7 @@ const deleteKeyCountEl = document.getElementById("deleteKeyCount");
 const typingSpeedEl = document.getElementById("typingSpeed");
 const mouseSpeedEl = document.getElementById("mouseSpeed");
 const cognitiveLoadScoreEl = document.getElementById("cognitiveLoadScore");
+const cognitiveLoadMeterFillEl = document.getElementById("cognitiveLoadMeterFill");
 const lastMetricsWindowStatusEl = document.getElementById(
   "lastMetricsWindowStatus"
 );
@@ -40,6 +41,8 @@ const toggleReminderBtn = document.getElementById("toggleReminder");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
 const bgModeLabelEl = document.getElementById("bgModeLabel");
+const filteringSelectEl = document.getElementById("filteringSelect");
+const sensitivitySelectEl = document.getElementById("sensitivitySelect");
 const changePasswordMenuItemBtn = document.getElementById("changePasswordMenuItem");
 const settingMenuItemBtn = document.getElementById("settingMenuItem");
 const privacyPolicyMenuItemBtn = document.getElementById("privacyPolicyMenuItem");
@@ -59,6 +62,8 @@ async function refresh() {
     "switchCount",
     "delCount",
     "bgMode",
+    "filteringLevel",
+    "sensitivityLevel",
     "metricsHistory",
     "lastMetricsWindowStatus"
   ]);
@@ -94,6 +99,7 @@ async function refresh() {
       lastSample.cognitiveLoadScore,
       "Not calculated yet"
     );
+    updateCognitiveLoadMeter(lastSample);
     updateServerStatus(lastSample, data.lastMetricsWindowStatus);
   } else {
     openTabsCountEl.textContent = 0;
@@ -103,6 +109,7 @@ async function refresh() {
     typingSpeedEl.textContent = 0;
     mouseSpeedEl.textContent = 0;
     cognitiveLoadScoreEl.textContent = "Not calculated yet";
+    updateCognitiveLoadMeter(null);
     updateServerStatus(null, data.lastMetricsWindowStatus);
   }
 
@@ -113,6 +120,8 @@ async function refresh() {
   const isDarkMode = data.bgMode === "dark";
   changeBgBtn.setAttribute("aria-pressed", String(isDarkMode));
   bgModeLabelEl.textContent = isDarkMode ? "Dark Mode" : "Light Mode";
+  filteringSelectEl.value = data.filteringLevel || "disable";
+  sensitivitySelectEl.value = data.sensitivityLevel || "medium";
 
   if (isDarkMode) {
     document.body.style.background = "linear-gradient(135deg, #111827, #1f2937)";
@@ -165,6 +174,43 @@ function updateServerStatus(lastSample, lastMetricsWindowStatus) {
 function formatNumber(value, fallback) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue.toFixed(2) : fallback;
+}
+
+function updateCognitiveLoadMeter(sample) {
+  const meterEl = cognitiveLoadMeterFillEl.parentElement;
+
+  if (!sample || !Number.isFinite(Number(sample.cognitiveLoadScore))) {
+    cognitiveLoadMeterFillEl.style.width = "0%";
+    cognitiveLoadMeterFillEl.style.background = "#22c55e";
+    meterEl.setAttribute("aria-valuenow", "0");
+    return;
+  }
+
+  const score = Number(sample.cognitiveLoadScore);
+  const baseline = Number(sample.baselineScore || sample.comparisonBaselineScore);
+  const ratio = Number.isFinite(baseline) && baseline > 0 ? score / baseline : 1;
+  const normalizedRatio = Math.max(0, Math.min(ratio, 1.5));
+  const percent = Math.round((normalizedRatio / 1.5) * 100);
+
+  cognitiveLoadMeterFillEl.style.width = `${percent}%`;
+  cognitiveLoadMeterFillEl.style.background = getCognitiveLoadMeterColor(ratio);
+  meterEl.setAttribute("aria-valuenow", String(percent));
+}
+
+function getCognitiveLoadMeterColor(ratio) {
+  if (ratio < 0.85) {
+    return "#22c55e";
+  }
+
+  if (ratio < 1) {
+    return "#84cc16";
+  }
+
+  if (ratio < 1.25) {
+    return "#f59e0b";
+  }
+
+  return "#ef4444";
 }
 
 function updateLastWindowStatus(lastMetricsWindowStatus) {
@@ -423,6 +469,18 @@ changeBgBtn.addEventListener("click", async () => {
   });
 
   refresh();
+});
+
+filteringSelectEl.addEventListener("change", async () => {
+  await chrome.storage.local.set({
+    filteringLevel: filteringSelectEl.value
+  });
+});
+
+sensitivitySelectEl.addEventListener("change", async () => {
+  await chrome.storage.local.set({
+    sensitivityLevel: sensitivitySelectEl.value
+  });
 });
 
 logoutBtn.addEventListener("click", async () => {

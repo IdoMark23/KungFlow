@@ -6,6 +6,8 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+Backup/
+UpgradeLog.htm
 
 node_modules/
 npm-debug.log*
