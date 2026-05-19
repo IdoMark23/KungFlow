@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="KungFlow"
         Width="360"
-        Height="470"
+        Height="650"
         MinWidth="360"
-        MinHeight="470"
+        MinHeight="650"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#E0F7FF">
@@ -143,11 +143,11 @@
                Width="72"
                Height="56"
                Stretch="Uniform"
-               Margin="0,0,0,12" />
+               Margin="0,0,0,10" />
 
         <Border Background="White"
                 CornerRadius="14"
-                Padding="18">
+                Padding="16">
           <Border.Effect>
             <DropShadowEffect Color="#33000000" BlurRadius="14" ShadowDepth="4" Opacity="0.35" />
           </Border.Effect>
@@ -164,9 +164,144 @@
                        FontSize="13"
                        Foreground="#6B7280"
                        TextAlignment="Center"
-                       Margin="0,0,0,16" />
+                       Margin="0,0,0,14" />
 
-            <Button Content="Logout"
+            <Grid Margin="0,0,0,14">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+
+              <TextBlock Grid.Row="0"
+                         Grid.Column="0"
+                         Text="State"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="LoadStateTextBlock"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Text="Waiting"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="1"
+                         Grid.Column="0"
+                         Text="Score"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="ScoreTextBlock"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Text="-"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="2"
+                         Grid.Column="0"
+                         Text="Baseline"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="BaselineTextBlock"
+                         Grid.Row="2"
+                         Grid.Column="1"
+                         Text="-"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="3"
+                         Grid.Column="0"
+                         Text="Progress"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="BaselineProgressTextBlock"
+                         Grid.Row="3"
+                         Grid.Column="1"
+                         Text="-"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="4"
+                         Grid.Column="0"
+                         Text="Server recommendation"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="NotificationRecommendationTextBlock"
+                         Grid.Row="4"
+                         Grid.Column="1"
+                         Text="-"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="5"
+                         Grid.Column="0"
+                         Text="Local focus mode"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,8" />
+              <TextBlock x:Name="LocalFocusModeTextBlock"
+                         Grid.Row="5"
+                         Grid.Column="1"
+                         Text="Off"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right"
+                         Margin="0,0,0,8" />
+
+              <TextBlock Grid.Row="6"
+                         Grid.Column="0"
+                         Text="Last update"
+                         FontSize="12"
+                         Foreground="#6B7280"
+                         Margin="0,0,12,0" />
+              <TextBlock x:Name="LastStatusUpdateTextBlock"
+                         Grid.Row="6"
+                         Grid.Column="1"
+                         Text="Never"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#111827"
+                         TextAlignment="Right" />
+            </Grid>
+
+            <TextBlock x:Name="DesktopStatusMessageTextBlock"
+                       MinHeight="16"
+                       FontSize="12"
+                       Foreground="#6B7280"
+                       TextAlignment="Center"
+                       Margin="0,0,0,12" />
+
+            <Button x:Name="LogoutButton"
+                    Content="Logout"
                     Style="{StaticResource SecondaryButton}"
                     Click="LogoutButton_Click" />
           </StackPanel>
