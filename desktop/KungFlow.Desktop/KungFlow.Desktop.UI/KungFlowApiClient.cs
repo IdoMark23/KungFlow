@@ -62,7 +62,7 @@ internal sealed record LoginResponse(
     [property: JsonPropertyName("user")] LoginUser User);
 
 internal sealed record LoginUser(
-    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("email")] string Email,
     [property: JsonPropertyName("username")] string Username);
 
