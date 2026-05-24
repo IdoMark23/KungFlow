@@ -419,6 +419,25 @@
       color: #991b1b;
     }
 
+    .demo-actions {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .demo-button {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .demo-message {
+      min-height: 14px;
+      color: #6b7280;
+      font-size: 11px;
+      line-height: 1.25;
+      text-align: center;
+    }
+
     .active {
       color: #16a34a;
     }
@@ -646,22 +665,6 @@
     <div id="mainScreen" class="screen active-screen">
       <div class="card">
         <div id="statisticPanel" class="tab-panel active-panel" role="tabpanel" aria-labelledby="statisticTab">
-          <div class="section-title">Total counters</div>
-
-          <div class="metrics-grid">
-            <div class="metric-tile">
-              <div class="label">Total tab switches</div>
-              <div id="count" class="sub-count">0</div>
-            </div>
-
-            <div class="metric-tile">
-              <div class="label">Total Delete/Backspace</div>
-              <div id="delCount" class="sub-count">0</div>
-            </div>
-          </div>
-
-          <hr>
-
           <div class="section-title">Last collection window</div>
 
           <div class="metrics-grid">
@@ -729,6 +732,13 @@
               <span id="serverSyncError" class="status-value bad">None</span>
             </div>
           </div>
+
+          <div class="demo-actions">
+            <button id="demoResetMetricsButton" class="demo-button" type="button">Demo: Reset metrics</button>
+            <button id="demoBaselineButton" class="demo-button" type="button">Demo: Fill baseline</button>
+            <button id="demoOverloadButton" class="demo-button" type="button">Demo: Trigger overload</button>
+            <div id="demoMessage" class="demo-message"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -740,14 +750,6 @@
         </div>
 
         <div class="setting-options">
-          <div class="toggle-row">
-            <button id="toggleReminder" class="toggle-control" type="button" aria-pressed="true"
-              aria-label="Toggle Load Popup">
-              <span class="toggle-knob" aria-hidden="true"></span>
-            </button>
-            <span class="toggle-label">Load Popup</span>
-          </div>
-
           <div class="toggle-row">
             <button id="changeBg" class="toggle-control" type="button" aria-pressed="false"
               aria-label="Toggle color mode">

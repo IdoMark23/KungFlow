@@ -110,6 +110,46 @@ function createSqlServerStore({
         .execute("dbo.GetMetricsSamplesByUserId");
 
       return result.recordset.map(toMetricsSample);
+    },
+
+    async deleteMetricsSamples(userId) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), userId)
+        .execute("dbo.DeleteMetricsSamplesByUserId");
+
+      return Number(result.recordset[0]?.DeletedCount || 0);
+    },
+
+    async getCognitiveState(userId) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), userId)
+        .execute("dbo.GetUserCognitiveState");
+
+      return toCognitiveState(result.recordset[0]);
+    },
+
+    async saveCognitiveState(cognitiveState) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), cognitiveState.userId)
+        .input("SamplesCollected", sql.Int, cognitiveState.samplesCollected)
+        .input("Phase", sql.NVarChar(50), cognitiveState.phase)
+        .input("State", sql.NVarChar(50), cognitiveState.state)
+        .input("CognitiveLoadScore", sql.Float, toNullableNumber(cognitiveState.cognitiveLoadScore))
+        .input("BaselineScore", sql.Float, toNullableNumber(cognitiveState.baselineScore))
+        .input("ComparisonBaselineScore", sql.Float, toNullableNumber(cognitiveState.comparisonBaselineScore))
+        .input("ShouldSilenceNotifications", sql.Bit, Boolean(cognitiveState.shouldSilenceNotifications))
+        .input("UpdatedAt", sql.DateTime2, cognitiveState.updatedAt ? new Date(cognitiveState.updatedAt) : null)
+        .execute("dbo.UpsertUserCognitiveState");
+
+      return toCognitiveState(result.recordset[0]);
+    },
+
+    async deleteCognitiveState(userId) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), userId)
+        .execute("dbo.DeleteUserCognitiveState");
+
+      return Number(result.recordset[0]?.DeletedCount || 0);
     }
   };
 }
@@ -154,6 +194,22 @@ function toMetricsSample(row) {
       mouseSpeed: row.MouseSpeed
     },
     createdAt: toIsoString(row.CreatedAt)
+  };
+}
+
+function toCognitiveState(row) {
+  if (!row) return null;
+
+  return {
+    userId: row.UserId,
+    samplesCollected: row.SamplesCollected,
+    phase: row.Phase,
+    state: row.State,
+    cognitiveLoadScore: row.CognitiveLoadScore,
+    baselineScore: row.BaselineScore,
+    comparisonBaselineScore: row.ComparisonBaselineScore,
+    shouldSilenceNotifications: Boolean(row.ShouldSilenceNotifications),
+    updatedAt: toIsoString(row.UpdatedAt)
   };
 }
 

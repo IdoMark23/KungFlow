@@ -147,8 +147,161 @@ function getCurrentStatus(samples, options = {}) {
   };
 }
 
+function createNoMetricsStatus(options = {}) {
+  return {
+    phase: "unknown",
+    state: "no_metrics",
+    cognitiveLoadScore: null,
+    baselineScore: null,
+    comparisonBaselineScore: null,
+    baselineSamplesCollected: 0,
+    baselineSamplesRequired:
+      options.baselineSampleCount ?? cognitiveLoadConfig.baselineSampleCount,
+    shouldSilenceNotifications: false,
+    updatedAt: null
+  };
+}
+
+function updateCognitiveState(previousState, sample, options = {}) {
+  const baselineSampleCount =
+    options.baselineSampleCount ?? cognitiveLoadConfig.baselineSampleCount;
+  const overloadThresholdMultiplier =
+    options.overloadThresholdMultiplier ??
+    cognitiveLoadConfig.overloadThresholdMultiplier;
+  const baselineEmaAlpha =
+    options.baselineEmaAlpha ?? cognitiveLoadConfig.baselineEmaAlpha;
+  const metricWeights = options.metricWeights ?? cognitiveLoadConfig.metricWeights;
+  const previousSamplesCollected = Number(previousState?.samplesCollected || 0);
+  const samplesCollected = previousSamplesCollected + 1;
+  const cognitiveLoadScore = calculateCognitiveLoadScore(
+    sample.metrics,
+    metricWeights
+  );
+  const previousBaselineScore = Number.isFinite(Number(previousState?.baselineScore))
+    ? Number(previousState.baselineScore)
+    : null;
+
+  if (samplesCollected < baselineSampleCount) {
+    return {
+      userId: sample.userId,
+      samplesCollected,
+      phase: "baseline",
+      state: "collecting_baseline",
+      cognitiveLoadScore,
+      baselineScore: calculateRunningAverage(
+        previousBaselineScore,
+        previousSamplesCollected,
+        cognitiveLoadScore
+      ),
+      comparisonBaselineScore: null,
+      shouldSilenceNotifications: false,
+      updatedAt: sample.timestamp
+    };
+  }
+
+  if (samplesCollected === baselineSampleCount) {
+    const baselineScore = calculateRunningAverage(
+      previousBaselineScore,
+      previousSamplesCollected,
+      cognitiveLoadScore
+    );
+    const isOverloaded = isScoreOverloaded(
+      cognitiveLoadScore,
+      baselineScore,
+      overloadThresholdMultiplier
+    );
+
+    return {
+      userId: sample.userId,
+      samplesCollected,
+      phase: "active",
+      state: isOverloaded ? "overloaded" : "normal",
+      cognitiveLoadScore,
+      baselineScore,
+      comparisonBaselineScore: baselineScore,
+      shouldSilenceNotifications: isOverloaded,
+      updatedAt: sample.timestamp
+    };
+  }
+
+  const comparisonBaselineScore = previousBaselineScore;
+  const baselineScore = calculateExponentialMovingAverage(
+    previousBaselineScore,
+    cognitiveLoadScore,
+    baselineEmaAlpha
+  );
+  const isOverloaded = isScoreOverloaded(
+    cognitiveLoadScore,
+    comparisonBaselineScore,
+    overloadThresholdMultiplier
+  );
+
+  return {
+    userId: sample.userId,
+    samplesCollected,
+    phase: "active",
+    state: isOverloaded ? "overloaded" : "normal",
+    cognitiveLoadScore,
+    baselineScore,
+    comparisonBaselineScore,
+    shouldSilenceNotifications: isOverloaded,
+    updatedAt: sample.timestamp
+  };
+}
+
+function rebuildCognitiveState(samples, options = {}) {
+  return samples.reduce((state, sample) => {
+    return updateCognitiveState(state, sample, options);
+  }, null);
+}
+
+function cognitiveStateToStatus(cognitiveState, options = {}) {
+  if (!cognitiveState) {
+    return createNoMetricsStatus(options);
+  }
+
+  const baselineSampleCount =
+    options.baselineSampleCount ?? cognitiveLoadConfig.baselineSampleCount;
+  const isCollectingBaseline = cognitiveState.samplesCollected < baselineSampleCount;
+
+  return {
+    phase: cognitiveState.phase,
+    state: cognitiveState.state,
+    cognitiveLoadScore: cognitiveState.cognitiveLoadScore,
+    baselineScore: isCollectingBaseline ? null : cognitiveState.baselineScore,
+    comparisonBaselineScore: cognitiveState.comparisonBaselineScore,
+    baselineSamplesCollected: Math.min(
+      cognitiveState.samplesCollected,
+      baselineSampleCount
+    ),
+    baselineSamplesRequired: baselineSampleCount,
+    shouldSilenceNotifications: cognitiveState.shouldSilenceNotifications,
+    updatedAt: cognitiveState.updatedAt
+  };
+}
+
+function calculateRunningAverage(currentAverage, currentCount, nextValue) {
+  if (currentAverage === null || currentCount === 0) {
+    return nextValue;
+  }
+
+  return (currentAverage * currentCount + nextValue) / (currentCount + 1);
+}
+
+function isScoreOverloaded(score, baselineScore, overloadThresholdMultiplier) {
+  return (
+    baselineScore !== null &&
+    Number.isFinite(Number(baselineScore)) &&
+    score > baselineScore * overloadThresholdMultiplier
+  );
+}
+
 module.exports = {
   calculateCognitiveLoadScore,
   calculateExponentialMovingAverage,
+  cognitiveStateToStatus,
+  createNoMetricsStatus,
+  rebuildCognitiveState,
+  updateCognitiveState,
   getCurrentStatus
 };

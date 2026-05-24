@@ -2,13 +2,11 @@ importScripts("apiClient.js");
 
 console.log("Background service worker loaded");
 
-const COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES = 5;
 // Temporary for testing.
 // Change to 15 for production.
 const METRICS_COLLECTION_INTERVAL_MINUTES = 1;
 const RAW_HISTORY_RETENTION_MINUTES = 5;
 const MAX_METRICS_HISTORY_ENTRIES = 120;
-const ALARM_COGNITIVE_LOAD_REMINDER = "cognitiveLoadReminder";
 const ALARM_METRICS_COLLECTION = "metricsCollection";
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -17,7 +15,6 @@ chrome.runtime.onInstalled.addListener(async () => {
     accessToken: null,
     user: null,
     isActive: false,
-    cognitiveLoadReminderEnabled: true,
 
     switchCount: 0,
     switchHistory: [],
@@ -32,11 +29,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 
     metricsHistory: [],
     lastMetricsWindowStatus: null
-  });
-	//Rotem note
-  // experiment - only for MVP user self-report
-  chrome.alarms.create(ALARM_COGNITIVE_LOAD_REMINDER, {
-    periodInMinutes: COGNITIVE_LOAD_REMINDER_INTERVAL_MINUTES
   });
 
   // production - collect behavioral metrics
@@ -70,31 +62,6 @@ chrome.tabs.onActivated.addListener(async () => {
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === ALARM_COGNITIVE_LOAD_REMINDER) {
-    const data = await chrome.storage.local.get([
-      "isLoggedIn",
-      "isActive",
-      "cognitiveLoadReminderEnabled"
-    ]);
-
-    if (
-      !data.isLoggedIn ||
-      !data.isActive ||
-      data.cognitiveLoadReminderEnabled === false
-    ) {
-      return;
-    }
-
-    chrome.windows.create({
-      url: chrome.runtime.getURL("rating.html"),
-      type: "popup",
-      width: 360,
-      height: 320
-    });
-
-    return;
-  }
-
   if (alarm.name === ALARM_METRICS_COLLECTION) {
     const now = Date.now();
     const collectionWindowMinutes = METRICS_COLLECTION_INTERVAL_MINUTES;

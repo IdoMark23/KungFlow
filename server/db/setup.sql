@@ -61,6 +61,22 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID(N'dbo.UserCognitiveStates', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UserCognitiveStates (
+        UserId NVARCHAR(64) NOT NULL PRIMARY KEY,
+        SamplesCollected INT NOT NULL,
+        Phase NVARCHAR(50) NOT NULL,
+        State NVARCHAR(50) NOT NULL,
+        CognitiveLoadScore FLOAT NULL,
+        BaselineScore FLOAT NULL,
+        ComparisonBaselineScore FLOAT NULL,
+        ShouldSilenceNotifications BIT NOT NULL,
+        UpdatedAt DATETIME2 NULL
+    );
+END;
+GO
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.foreign_keys
@@ -233,5 +249,107 @@ BEGIN
     FROM dbo.MetricsSamples
     WHERE UserId = @UserId
     ORDER BY Timestamp ASC;
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_UserCognitiveStates_Users'
+)
+BEGIN
+    ALTER TABLE dbo.UserCognitiveStates
+    ADD CONSTRAINT FK_UserCognitiveStates_Users
+        FOREIGN KEY (UserId) REFERENCES dbo.Users(Id);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.DeleteMetricsSamplesByUserId
+    @UserId NVARCHAR(64)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM dbo.MetricsSamples
+    WHERE UserId = @UserId;
+
+    SELECT @@ROWCOUNT AS DeletedCount;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.GetUserCognitiveState
+    @UserId NVARCHAR(64)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        UserId, SamplesCollected, Phase, State,
+        CognitiveLoadScore, BaselineScore, ComparisonBaselineScore,
+        ShouldSilenceNotifications, UpdatedAt
+    FROM dbo.UserCognitiveStates
+    WHERE UserId = @UserId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.UpsertUserCognitiveState
+    @UserId NVARCHAR(64),
+    @SamplesCollected INT,
+    @Phase NVARCHAR(50),
+    @State NVARCHAR(50),
+    @CognitiveLoadScore FLOAT = NULL,
+    @BaselineScore FLOAT = NULL,
+    @ComparisonBaselineScore FLOAT = NULL,
+    @ShouldSilenceNotifications BIT = 0,
+    @UpdatedAt DATETIME2 = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dbo.UserCognitiveStates
+    SET
+        SamplesCollected = @SamplesCollected,
+        Phase = @Phase,
+        State = @State,
+        CognitiveLoadScore = @CognitiveLoadScore,
+        BaselineScore = @BaselineScore,
+        ComparisonBaselineScore = @ComparisonBaselineScore,
+        ShouldSilenceNotifications = @ShouldSilenceNotifications,
+        UpdatedAt = @UpdatedAt
+    WHERE UserId = @UserId;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        INSERT INTO dbo.UserCognitiveStates (
+            UserId, SamplesCollected, Phase, State,
+            CognitiveLoadScore, BaselineScore, ComparisonBaselineScore,
+            ShouldSilenceNotifications, UpdatedAt
+        )
+        VALUES (
+            @UserId, @SamplesCollected, @Phase, @State,
+            @CognitiveLoadScore, @BaselineScore, @ComparisonBaselineScore,
+            @ShouldSilenceNotifications, @UpdatedAt
+        );
+    END;
+
+    SELECT
+        UserId, SamplesCollected, Phase, State,
+        CognitiveLoadScore, BaselineScore, ComparisonBaselineScore,
+        ShouldSilenceNotifications, UpdatedAt
+    FROM dbo.UserCognitiveStates
+    WHERE UserId = @UserId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.DeleteUserCognitiveState
+    @UserId NVARCHAR(64)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM dbo.UserCognitiveStates
+    WHERE UserId = @UserId;
+
+    SELECT @@ROWCOUNT AS DeletedCount;
 END;
 GO

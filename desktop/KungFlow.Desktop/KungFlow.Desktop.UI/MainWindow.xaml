@@ -8,6 +8,7 @@
         MinHeight="650"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
+        Icon="Assets/icon128.png"
         Background="#E0F7FF">
   <Window.Resources>
     <LinearGradientBrush x:Key="AppBackground" StartPoint="0,0" EndPoint="1,1">
@@ -247,7 +248,7 @@
 
               <TextBlock Grid.Row="4"
                          Grid.Column="0"
-                         Text="Server recommendation"
+                         Text="Focus recommendation"
                          FontSize="12"
                          Foreground="#6B7280"
                          Margin="0,0,12,8" />
@@ -263,7 +264,7 @@
 
               <TextBlock Grid.Row="5"
                          Grid.Column="0"
-                         Text="Local focus mode"
+                         Text="KungFlow focus state"
                          FontSize="12"
                          Foreground="#6B7280"
                          Margin="0,0,12,8" />

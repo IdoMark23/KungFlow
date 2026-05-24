@@ -1,5 +1,10 @@
 const express = require("express");
-const { getCurrentStatus } = require("./domain/cognitiveLoad");
+const { cognitiveLoadConfig, isDemoModeEnabled } = require("./config/cognitiveLoadConfig");
+const {
+  cognitiveStateToStatus,
+  rebuildCognitiveState,
+  updateCognitiveState
+} = require("./domain/cognitiveLoad");
 const { hashPassword, verifyPassword } = require("./domain/passwords");
 const { createAccessToken } = require("./domain/tokens");
 const { logInfo, logWarn } = require("./logger");
@@ -45,7 +50,9 @@ function createApp({ store = createInMemoryStore() } = {}) {
   app.get("/health", (req, res) => {
     res.json({
       status: "ok",
-      service: "kungflow-server"
+      service: "kungflow-server",
+      demoMode: isDemoModeEnabled,
+      baselineSampleCount: cognitiveLoadConfig.baselineSampleCount
     });
   });
 
@@ -234,6 +241,8 @@ function createApp({ store = createInMemoryStore() } = {}) {
       timestamp: sample.timestamp || new Date().toISOString(),
       metrics
     });
+    const cognitiveState = await updateStoredCognitiveState(req, savedSample);
+    const status = cognitiveStateToStatus(cognitiveState);
 
     logInfo("metrics_sample_received", {
       userId: req.user.id,
@@ -245,17 +254,18 @@ function createApp({ store = createInMemoryStore() } = {}) {
 
     res.status(201).json({
       accepted: true,
-      sample: savedSample
+      sample: savedSample,
+      status
     });
   }));
 
   app.get("/api/status/current", requireAuth, asyncHandler(async (req, res) => {
-    const samples = await app.locals.store.getMetricsSamples(req.user.id);
-    const status = getCurrentStatus(samples);
+    const cognitiveState = await getStoredOrRebuiltCognitiveState(req);
+    const status = cognitiveStateToStatus(cognitiveState);
 
     logInfo("status_current_requested", {
       userId: req.user.id,
-      samplesCount: samples.length,
+      samplesCount: cognitiveState?.samplesCollected || 0,
       phase: status.phase,
       state: status.state,
       cognitiveLoadScore: status.cognitiveLoadScore,
@@ -266,6 +276,87 @@ function createApp({ store = createInMemoryStore() } = {}) {
     res.json({
       userId: req.user.id,
       ...status
+    });
+  }));
+
+  app.post("/api/demo/baseline", requireAuth, asyncHandler(async (req, res) => {
+    if (!isDemoModeEnabled) {
+      return res.status(404).json({
+        error: "Demo mode is not enabled."
+      });
+    }
+
+    const savedSamples = await saveDemoSamples(req, [
+      createDemoMetrics({ tabSwitchCount: 2, keyPressCount: 8, typingSpeed: 8, mouseSpeed: 80 }),
+      createDemoMetrics({ tabSwitchCount: 3, keyPressCount: 10, typingSpeed: 10, mouseSpeed: 90 }),
+      createDemoMetrics({ tabSwitchCount: 2, keyPressCount: 9, typingSpeed: 9, mouseSpeed: 85 })
+    ]);
+    const cognitiveState = await req.app.locals.store.getCognitiveState(req.user.id);
+    const status = cognitiveStateToStatus(cognitiveState);
+
+    logInfo("demo_baseline_created", {
+      userId: req.user.id,
+      samplesCreated: savedSamples.length
+    });
+
+    res.status(201).json({
+      created: savedSamples.length,
+      status
+    });
+  }));
+
+  app.post("/api/demo/overload", requireAuth, asyncHandler(async (req, res) => {
+    if (!isDemoModeEnabled) {
+      return res.status(404).json({
+        error: "Demo mode is not enabled."
+      });
+    }
+
+    const savedSamples = await saveDemoSamples(req, [
+      createDemoMetrics({
+        openTabsCount: 12,
+        tabSwitchCount: 22,
+        deleteKeyCount: 8,
+        keyPressCount: 80,
+        typingSpeed: 70,
+        mouseSpeed: 420
+      })
+    ]);
+    const cognitiveState = await req.app.locals.store.getCognitiveState(req.user.id);
+    const status = cognitiveStateToStatus(cognitiveState);
+
+    logInfo("demo_overload_created", {
+      userId: req.user.id,
+      samplesCreated: savedSamples.length,
+      state: status.state,
+      shouldSilenceNotifications: status.shouldSilenceNotifications
+    });
+
+    res.status(201).json({
+      created: savedSamples.length,
+      status
+    });
+  }));
+
+  app.post("/api/demo/reset-metrics", requireAuth, asyncHandler(async (req, res) => {
+    if (!isDemoModeEnabled) {
+      return res.status(404).json({
+        error: "Demo mode is not enabled."
+      });
+    }
+
+    const deletedCount = await app.locals.store.deleteMetricsSamples(req.user.id);
+    await app.locals.store.deleteCognitiveState(req.user.id);
+    const status = cognitiveStateToStatus(null);
+
+    logInfo("demo_metrics_reset", {
+      userId: req.user.id,
+      deletedCount
+    });
+
+    res.json({
+      deletedCount,
+      status
     });
   }));
 
@@ -305,6 +396,60 @@ function isInactiveMetricsWindow(metrics) {
     Number(metrics.typingSpeed || 0) === 0 &&
     Number(metrics.mouseSpeed || 0) === 0
   );
+}
+
+async function getStoredOrRebuiltCognitiveState(req) {
+  const existingState = await req.app.locals.store.getCognitiveState(req.user.id);
+
+  if (existingState) {
+    return existingState;
+  }
+
+  const samples = await req.app.locals.store.getMetricsSamples(req.user.id);
+
+  if (samples.length === 0) {
+    return null;
+  }
+
+  const rebuiltState = rebuildCognitiveState(samples);
+  return req.app.locals.store.saveCognitiveState(rebuiltState);
+}
+
+async function updateStoredCognitiveState(req, sample) {
+  const previousState = await req.app.locals.store.getCognitiveState(req.user.id);
+  const nextState = updateCognitiveState(previousState, sample);
+
+  return req.app.locals.store.saveCognitiveState(nextState);
+}
+
+async function saveDemoSamples(req, metricsSamples) {
+  const baseTimestamp = Date.now();
+  const savedSamples = [];
+
+  for (const [index, metrics] of metricsSamples.entries()) {
+    const savedSample = await req.app.locals.store.saveMetricsSample({
+      userId: req.user.id,
+      platform: "extension",
+      timestamp: new Date(baseTimestamp + index * 1000).toISOString(),
+      metrics
+    });
+    await updateStoredCognitiveState(req, savedSample);
+    savedSamples.push(savedSample);
+  }
+
+  return savedSamples;
+}
+
+function createDemoMetrics(overrides = {}) {
+  return {
+    openTabsCount: 5,
+    tabSwitchCount: 2,
+    deleteKeyCount: 1,
+    keyPressCount: 10,
+    typingSpeed: 10,
+    mouseSpeed: 90,
+    ...overrides
+  };
 }
 
 function asyncHandler(handler) {

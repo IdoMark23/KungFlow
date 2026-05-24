@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
 using Forms = System.Windows.Forms;
 using MediaColor = System.Windows.Media.Color;
 
@@ -145,14 +146,14 @@ public partial class MainWindow : Window
         BaselineTextBlock.Text = FormatNullableNumber(status.BaselineScore);
         BaselineProgressTextBlock.Text = FormatBaselineProgress(status);
         NotificationRecommendationTextBlock.Text =
-            status.ShouldSilenceNotifications ? "Silence" : "Allow";
+            status.ShouldSilenceNotifications ? "Reduce interruptions" : "No action";
         NotificationRecommendationTextBlock.Foreground = new SolidColorBrush(
             status.ShouldSilenceNotifications
                 ? MediaColor.FromRgb(220, 38, 38)
                 : MediaColor.FromRgb(22, 163, 74));
 
         bool isFocusModeEnabled = focusModeController.IsEnabled();
-        LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "On" : "Off";
+        LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "Active" : "Inactive";
         LocalFocusModeTextBlock.Foreground = new SolidColorBrush(
             isFocusModeEnabled
                 ? MediaColor.FromRgb(220, 38, 38)
@@ -169,7 +170,7 @@ public partial class MainWindow : Window
         BaselineProgressTextBlock.Text = "-";
         NotificationRecommendationTextBlock.Text = "-";
         NotificationRecommendationTextBlock.Foreground = new SolidColorBrush(MediaColor.FromRgb(17, 24, 39));
-        LocalFocusModeTextBlock.Text = "Off";
+        LocalFocusModeTextBlock.Text = "Inactive";
         LocalFocusModeTextBlock.Foreground = new SolidColorBrush(MediaColor.FromRgb(17, 24, 39));
         LastStatusUpdateTextBlock.Text = "Never";
     }
@@ -212,7 +213,7 @@ public partial class MainWindow : Window
         exitMenuItem.Click += (_, _) => ExitFromTray();
 
         trayIcon.Text = "KungFlow";
-        trayIcon.Icon = System.Drawing.SystemIcons.Application;
+        trayIcon.Icon = CreateTrayIcon();
         trayIcon.ContextMenuStrip = new Forms.ContextMenuStrip();
         trayIcon.ContextMenuStrip.Items.Add(openMenuItem);
         trayIcon.ContextMenuStrip.Items.Add(exitMenuItem);
@@ -261,4 +262,31 @@ public partial class MainWindow : Window
         trayIcon.Dispose();
         base.OnClosed(e);
     }
+
+    private static System.Drawing.Icon CreateTrayIcon()
+    {
+        var resourceInfo = System.Windows.Application.GetResourceStream(
+            new Uri("pack://application:,,,/Assets/icon128.png"));
+
+        if (resourceInfo is null)
+        {
+            return System.Drawing.SystemIcons.Application;
+        }
+
+        using var bitmap = new System.Drawing.Bitmap(resourceInfo.Stream);
+        IntPtr iconHandle = bitmap.GetHicon();
+
+        try
+        {
+            using var icon = System.Drawing.Icon.FromHandle(iconHandle);
+            return (System.Drawing.Icon)icon.Clone();
+        }
+        finally
+        {
+            DestroyIcon(iconHandle);
+        }
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool DestroyIcon(IntPtr hIcon);
 }

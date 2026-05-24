@@ -4,6 +4,7 @@ function createInMemoryStore() {
   const usersByEmail = new Map();
   const usersById = new Map();
   const sessionsByToken = new Map();
+  const cognitiveStatesByUserId = new Map();
 
   return {
     saveUser(user) {
@@ -63,6 +64,27 @@ function createInMemoryStore() {
 
     getMetricsSamples(userId) {
       return metricsByUserId.get(userId) || [];
+    },
+
+    deleteMetricsSamples(userId) {
+      const deletedCount = (metricsByUserId.get(userId) || []).length;
+      metricsByUserId.delete(userId);
+
+      return deletedCount;
+    },
+
+    getCognitiveState(userId) {
+      return cognitiveStatesByUserId.get(userId) || null;
+    },
+
+    saveCognitiveState(cognitiveState) {
+      cognitiveStatesByUserId.set(cognitiveState.userId, cognitiveState);
+
+      return cognitiveState;
+    },
+
+    deleteCognitiveState(userId) {
+      return cognitiveStatesByUserId.delete(userId) ? 1 : 0;
     },
 
     statusByUserId

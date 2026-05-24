@@ -1,6 +1,3 @@
-const countEl = document.getElementById("count");
-const delCountEl = document.getElementById("delCount");
-
 const openTabsCountEl = document.getElementById("openTabsCount");
 const tabSwitchCountEl = document.getElementById("tabSwitchCount");
 const keyPressCountEl = document.getElementById("keyPressCount");
@@ -37,7 +34,6 @@ const statisticPanelEl = document.getElementById("statisticPanel");
 const settingPanelEl = document.getElementById("settingPanel");
 const toggleBtn = document.getElementById("toggle");
 const recordButtonLabelEl = document.getElementById("recordButtonLabel");
-const toggleReminderBtn = document.getElementById("toggleReminder");
 const resetBtn = document.getElementById("reset");
 const changeBgBtn = document.getElementById("changeBg");
 const bgModeLabelEl = document.getElementById("bgModeLabel");
@@ -52,13 +48,16 @@ const newPasswordEl = document.getElementById("newPassword");
 const confirmNewPasswordEl = document.getElementById("confirmNewPassword");
 const changePasswordMessageEl = document.getElementById("changePasswordMessage");
 const logoutBtn = document.getElementById("logout");
+const demoResetMetricsButtonEl = document.getElementById("demoResetMetricsButton");
+const demoBaselineButtonEl = document.getElementById("demoBaselineButton");
+const demoOverloadButtonEl = document.getElementById("demoOverloadButton");
+const demoMessageEl = document.getElementById("demoMessage");
 
 async function refresh() {
   const data = await chrome.storage.local.get([
     "isLoggedIn",
     "user",
     "isActive",
-    "cognitiveLoadReminderEnabled",
     "switchCount",
     "delCount",
     "bgMode",
@@ -74,11 +73,7 @@ async function refresh() {
   }
 
   const isActive = data.isActive || false;
-  const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
   userEmailTextEl.textContent = data.user?.email || "Logged in";
-
-  countEl.textContent = data.switchCount || 0;
-  delCountEl.textContent = data.delCount || 0;
 
   const metricsHistory = data.metricsHistory || [];
   const lastSample = metricsHistory[metricsHistory.length - 1];
@@ -115,7 +110,6 @@ async function refresh() {
 
   toggleBtn.setAttribute("aria-pressed", String(isActive));
   recordButtonLabelEl.textContent = isActive ? "Stop Record" : "Start Record";
-  toggleReminderBtn.setAttribute("aria-pressed", String(reminderEnabled));
 
   const isDarkMode = data.bgMode === "dark";
   changeBgBtn.setAttribute("aria-pressed", String(isDarkMode));
@@ -432,17 +426,6 @@ toggleBtn.addEventListener("click", async () => {
   refresh();
 });
 
-toggleReminderBtn.addEventListener("click", async () => {
-  const data = await chrome.storage.local.get("cognitiveLoadReminderEnabled");
-  const reminderEnabled = data.cognitiveLoadReminderEnabled !== false;
-
-  await chrome.storage.local.set({
-    cognitiveLoadReminderEnabled: !reminderEnabled
-  });
-
-  refresh();
-});
-
 resetBtn.addEventListener("click", async () => {
   await chrome.storage.local.set({
     switchCount: 0,
@@ -504,6 +487,120 @@ logoutBtn.addEventListener("click", async () => {
 
   window.location.href = "login.html";
 });
+
+demoResetMetricsButtonEl.addEventListener("click", async () => {
+  await runDemoAction({
+    button: demoResetMetricsButtonEl,
+    action: kungFlowResetDemoMetrics,
+    pendingMessage: "Resetting demo metrics...",
+    successMessage: "Demo metrics reset.",
+    sampleMetrics: null
+  });
+});
+
+demoBaselineButtonEl.addEventListener("click", async () => {
+  await runDemoAction({
+    button: demoBaselineButtonEl,
+    action: kungFlowCreateDemoBaseline,
+    pendingMessage: "Creating demo baseline...",
+    successMessage: "Demo baseline is ready.",
+    sampleMetrics: {
+      openTabsCount: 5,
+      tabSwitchCount: 2,
+      deleteKeyCount: 1,
+      keyPressCount: 10,
+      typingSpeed: 10,
+      mouseSpeed: 90
+    }
+  });
+});
+
+demoOverloadButtonEl.addEventListener("click", async () => {
+  await runDemoAction({
+    button: demoOverloadButtonEl,
+    action: kungFlowCreateDemoOverload,
+    pendingMessage: "Triggering demo overload...",
+    successMessage: "Demo overload sample created.",
+    sampleMetrics: {
+      openTabsCount: 12,
+      tabSwitchCount: 22,
+      deleteKeyCount: 8,
+      keyPressCount: 80,
+      typingSpeed: 70,
+      mouseSpeed: 420
+    }
+  });
+});
+
+async function runDemoAction({
+  button,
+  action,
+  pendingMessage,
+  successMessage,
+  sampleMetrics
+}) {
+  const data = await chrome.storage.local.get(["accessToken", "metricsHistory"]);
+
+  if (!data.accessToken) {
+    setDemoMessage("You must be logged in to run demo actions.", true);
+    return;
+  }
+
+  button.disabled = true;
+  setDemoMessage(pendingMessage);
+
+  try {
+    const response = await action({ accessToken: data.accessToken });
+    const status = response.status;
+    const demoSample = sampleMetrics
+      ? createDemoStatusSample(status, sampleMetrics)
+      : null;
+    const metricsHistory = demoSample
+      ? [...(data.metricsHistory || []), demoSample].slice(-120)
+      : [];
+
+    await chrome.storage.local.set({
+      metricsHistory,
+      lastMetricsWindowStatus: {
+        status: "synced",
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    setDemoMessage(successMessage);
+    refresh();
+  } catch (error) {
+    setDemoMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function createDemoStatusSample(status = {}, metrics = {}) {
+  return {
+    timestamp: new Date().toISOString(),
+    openTabsCount: metrics.openTabsCount ?? 0,
+    tabSwitchCount: metrics.tabSwitchCount ?? 0,
+    deleteKeyCount: metrics.deleteKeyCount ?? 0,
+    keyPressCount: metrics.keyPressCount ?? 0,
+    typingSpeed: metrics.typingSpeed ?? 0,
+    mouseSpeed: metrics.mouseSpeed ?? 0,
+    cognitiveLoadScore: status.cognitiveLoadScore,
+    cognitiveLoadState: status.state,
+    cognitiveLoadPhase: status.phase,
+    baselineScore: status.baselineScore,
+    comparisonBaselineScore: status.comparisonBaselineScore,
+    baselineSamplesCollected: status.baselineSamplesCollected,
+    baselineSamplesRequired: status.baselineSamplesRequired,
+    shouldSilenceNotifications: status.shouldSilenceNotifications,
+    syncedToServer: true
+  };
+}
+
+function setDemoMessage(message, isError = false) {
+  demoMessageEl.textContent = message;
+  demoMessageEl.style.color = isError ? "#dc2626" : "#6b7280";
+}
 
 chrome.storage.onChanged.addListener(() => {
   refresh();

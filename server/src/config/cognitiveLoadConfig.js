@@ -1,4 +1,4 @@
-const cognitiveLoadConfig = {
+const defaultCognitiveLoadConfig = {
   baselineSampleCount: 180,
   overloadThresholdMultiplier: 1.25,
   baselineEmaAlpha: 0.35,
@@ -12,4 +12,20 @@ const cognitiveLoadConfig = {
   }
 };
 
-module.exports = { cognitiveLoadConfig };
+const demoCognitiveLoadConfig = {
+  ...defaultCognitiveLoadConfig,
+  baselineSampleCount: 3,
+  overloadThresholdMultiplier: 1.1
+};
+
+const isDemoModeEnabled = process.env.KUNGFLOW_DEMO_MODE === "true";
+const cognitiveLoadConfig = isDemoModeEnabled
+  ? demoCognitiveLoadConfig
+  : defaultCognitiveLoadConfig;
+
+module.exports = {
+  cognitiveLoadConfig,
+  defaultCognitiveLoadConfig,
+  demoCognitiveLoadConfig,
+  isDemoModeEnabled
+};

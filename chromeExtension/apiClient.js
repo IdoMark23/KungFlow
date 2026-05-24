@@ -90,3 +90,21 @@ async function kungFlowChangePassword({
     })
   });
 }
+
+async function kungFlowCreateDemoBaseline({ accessToken }) {
+  return kungFlowAuthorizedApiRequest("/api/demo/baseline", accessToken, {
+    method: "POST"
+  });
+}
+
+async function kungFlowCreateDemoOverload({ accessToken }) {
+  return kungFlowAuthorizedApiRequest("/api/demo/overload", accessToken, {
+    method: "POST"
+  });
+}
+
+async function kungFlowResetDemoMetrics({ accessToken }) {
+  return kungFlowAuthorizedApiRequest("/api/demo/reset-metrics", accessToken, {
+    method: "POST"
+  });
+}
