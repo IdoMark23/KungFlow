@@ -41,6 +41,7 @@ const filteringSelectEl = document.getElementById("filteringSelect");
 const sensitivitySelectEl = document.getElementById("sensitivitySelect");
 const changePasswordMenuItemBtn = document.getElementById("changePasswordMenuItem");
 const settingMenuItemBtn = document.getElementById("settingMenuItem");
+const landingPageMenuItemBtn = document.getElementById("landingPageMenuItem");
 const privacyPolicyMenuItemBtn = document.getElementById("privacyPolicyMenuItem");
 const changePasswordFormEl = document.getElementById("changePasswordForm");
 const currentPasswordEl = document.getElementById("currentPassword");
@@ -370,6 +371,13 @@ changePasswordMenuItemBtn.addEventListener("click", () => {
 settingMenuItemBtn.addEventListener("click", () => {
   closeUserMenu();
   showScreen("setting");
+});
+
+landingPageMenuItemBtn.addEventListener("click", () => {
+  closeUserMenu();
+  chrome.tabs.create({
+    url: "http://127.0.0.1:3000/landing"
+  });
 });
 
 privacyPolicyMenuItemBtn.addEventListener("click", () => {
