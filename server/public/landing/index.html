@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KungFlow</title>
+    <link rel="stylesheet" href="/landing/styles.css">
+  </head>
+  <body>
+    <header class="topbar" aria-label="ניווט ראשי">
+      <a class="brand" href="/landing" aria-label="KungFlow">
+        <img src="/extension-assets/logo.png" alt="">
+        <span>KungFlow</span>
+      </a>
+      <nav class="nav-links" aria-label="קישורי ניווט">
+        <a href="#how">איך זה עובד</a>
+        <a href="#signals">מדדים</a>
+        <a href="#start">התחלה</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">ניהול עומס קוגניטיבי בזמן אמת</p>
+          <h1>KungFlow</h1>
+          <p class="lead">
+            סביבת עבודה שמזהה מתי הריכוז מתחיל להישחק, עוקבת אחרי סימני עומס
+            מהדפדפן ומהדסקטופ, ועוזרת לשמור על שקט בזמן שצריך פוקוס.
+          </p>
+          <div class="actions" id="start">
+            <a class="button primary" href="/health">בדיקת שרת</a>
+            <a class="button secondary" href="#how">לראות איך זה עובד</a>
+          </div>
+        </div>
+
+        <div class="product-panel" aria-label="תצוגת מצב KungFlow">
+          <div class="panel-header">
+            <span class="status-dot"></span>
+            <span>מצב נוכחי</span>
+            <strong>Focus</strong>
+          </div>
+          <div class="score-ring">
+            <span>42</span>
+            <small>עומס קוגניטיבי</small>
+          </div>
+          <div class="metric-grid">
+            <div>
+              <span>מעברי טאבים</span>
+              <strong>3</strong>
+            </div>
+            <div>
+              <span>מהירות הקלדה</span>
+              <strong>רגועה</strong>
+            </div>
+            <div>
+              <span>תנועת עכבר</span>
+              <strong>יציבה</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" id="how">
+        <div class="section-heading">
+          <p class="eyebrow">איך זה עובד</p>
+          <h2>המערכת מחברת אותות קטנים לתמונה אחת ברורה</h2>
+        </div>
+        <div class="steps">
+          <article>
+            <span>01</span>
+            <h3>איסוף מדדים</h3>
+            <p>התוסף והדסקטופ שולחים מדדי עבודה כמו מעברי טאבים, הקלדה ותנועה.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>השוואה לבייסליין</h3>
+            <p>KungFlow לומדת מה נראה כמו מצב עבודה רגיל עבור המשתמש.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>תגובה בזמן הנכון</h3>
+            <p>כשהעומס עולה, המערכת יכולה לעדכן סטטוס ולסייע בצמצום הסחות.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="signals" id="signals">
+        <div>
+          <p class="eyebrow">מדדים</p>
+          <h2>בנוי לעבודה שוטפת, לא לדמו חד פעמי</h2>
+          <p>
+            הדף הזה מוגש ישירות מהשרת הקיים, כך שאפשר לפתוח אותו מכל דפדפן דרך URL
+            ולהמשיך לפתח אותו לצד ה־API, התוסף והאפליקציה לדסקטופ.
+          </p>
+        </div>
+        <dl>
+          <div>
+            <dt>API</dt>
+            <dd>/api/status/current</dd>
+          </div>
+          <div>
+            <dt>Health</dt>
+            <dd>/health</dd>
+          </div>
+          <div>
+            <dt>Landing</dt>
+            <dd>/landing</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+  </body>
+</html>

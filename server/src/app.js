@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const { cognitiveLoadConfig, isDemoModeEnabled } = require("./config/cognitiveLoadConfig");
 const {
@@ -12,8 +13,13 @@ const { createInMemoryStore } = require("./storage/inMemoryStore");
 
 function createApp({ store = createInMemoryStore() } = {}) {
   const app = express();
+  const landingPath = path.join(__dirname, "..", "public", "landing");
+  const extensionAssetsPath = path.join(__dirname, "..", "..", "chromeExtension", "assets");
 
   app.locals.store = store;
+
+  app.use("/landing", express.static(landingPath));
+  app.use("/extension-assets", express.static(extensionAssetsPath));
 
   app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -31,6 +37,14 @@ function createApp({ store = createInMemoryStore() } = {}) {
   });
 
   app.use(express.json());
+
+  app.get("/", (req, res) => {
+    res.redirect("/landing");
+  });
+
+  app.get("/landing", (req, res) => {
+    res.sendFile(path.join(landingPath, "index.html"));
+  });
 
   app.use((req, res, next) => {
     const startedAt = Date.now();
