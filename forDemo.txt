@@ -1,0 +1,124 @@
+KungFlow demo commands
+======================
+
+Run these commands from PowerShell.
+
+
+1. Start or check SQL Server LocalDB
+-----------------------------------
+
+sqllocaldb start MSSQLLocalDB
+
+sqllocaldb info MSSQLLocalDB
+
+
+2. Create/update the local database structure
+---------------------------------------------
+
+cd C:\MTA\Curses\hubYazmoot\KungFlow
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -i server\db\setup.sql -b
+
+
+3. Reset all local demo data
+----------------------------
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d KungFlowDB -Q "DELETE FROM dbo.UserCognitiveStates; DELETE FROM dbo.MetricsSamples; DELETE FROM dbo.Sessions; DELETE FROM dbo.Users;"
+
+
+4. Start the server in demo mode
+--------------------------------
+
+cd C:\MTA\Curses\hubYazmoot\KungFlow\server
+
+$env:KUNGFLOW_DEMO_MODE="true"
+
+node src/index.js
+
+
+5. Start the server in normal mode
+----------------------------------
+
+cd C:\MTA\Curses\hubYazmoot\KungFlow\server
+
+Remove-Item Env:KUNGFLOW_DEMO_MODE
+
+node src/index.js
+
+
+6. Check server health
+----------------------
+
+Open in browser:
+
+http://127.0.0.1:3000/health
+
+Demo mode should show:
+
+"demoMode": true
+"baselineSampleCount": 3
+
+
+7. Run the desktop app
+----------------------
+
+cd C:\MTA\Curses\hubYazmoot\KungFlow
+
+dotnet run --project desktop\KungFlow.Desktop\KungFlow.Desktop.UI\KungFlow.Desktop.UI.csproj
+
+
+8. Load/reload the Chrome extension
+-----------------------------------
+
+Open Chrome:
+
+chrome://extensions
+
+Then:
+
+- Enable Developer mode
+- Click Load unpacked
+- Select C:\MTA\Curses\hubYazmoot\KungFlow\chromeExtension
+- If already loaded, click Reload
+
+
+9. Recommended demo flow
+------------------------
+
+1. Start server in demo mode.
+2. Reload Chrome extension.
+3. Register/login in the extension.
+4. Login in the desktop app with the same user.
+5. In the extension, click Stop Record if it is recording.
+6. Open Status tab.
+7. Click Demo: Reset metrics.
+8. Click Demo: Fill baseline.
+9. Click Demo: Trigger overload.
+10. Wait up to 10 seconds.
+11. Desktop should show:
+    - Focus recommendation: Reduce interruptions
+    - KungFlow focus state: Active
+
+
+10. Inspect database data
+-------------------------
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d KungFlowDB -Q "SELECT Id, Email, Username, CreatedAt FROM dbo.Users;"
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d KungFlowDB -Q "SELECT AccessToken, UserId, Platform, CreatedAt FROM dbo.Sessions;"
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d KungFlowDB -Q "SELECT * FROM dbo.MetricsSamples ORDER BY Id DESC;"
+
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d KungFlowDB -Q "SELECT * FROM dbo.UserCognitiveStates;"
+
+
+11. Stop running apps
+---------------------
+
+Server:
+
+Ctrl + C
+
+Desktop app:
+
+Right-click KungFlow tray icon -> Exit
