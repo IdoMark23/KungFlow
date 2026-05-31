@@ -391,6 +391,7 @@ function toPublicUser(user) {
 function isInactiveMetricsWindow(metrics) {
   return (
     Number(metrics.tabSwitchCount || 0) === 0 &&
+    Number(metrics.windowSwitchCount || 0) === 0 &&
     Number(metrics.deleteKeyCount || 0) === 0 &&
     Number(metrics.keyPressCount || 0) === 0 &&
     Number(metrics.typingSpeed || 0) === 0 &&

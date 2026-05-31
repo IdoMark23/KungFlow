@@ -13,4 +13,8 @@
     <Resource Include="Assets\icon128.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\KungFlow.Desktop.Agent\KungFlow.Desktop.Agent.csproj" />
+  </ItemGroup>
+
 </Project>

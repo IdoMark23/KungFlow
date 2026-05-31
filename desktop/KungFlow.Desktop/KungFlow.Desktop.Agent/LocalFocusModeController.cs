@@ -1,9 +1,6 @@
-using System;
-using System.IO;
+namespace KungFlow.Desktop.Agent;
 
-namespace KungFlow.Desktop.UI;
-
-internal sealed class LocalFocusModeController
+public sealed class LocalFocusModeController
 {
     private const string EnabledValue = "on";
     private const string DisabledValue = "off";

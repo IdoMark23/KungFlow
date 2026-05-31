@@ -2,18 +2,23 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="KungFlow"
-        Width="360"
-        Height="650"
-        MinWidth="360"
-        MinHeight="650"
-        ResizeMode="NoResize"
+        Width="980"
+        Height="720"
+        MinWidth="760"
+        MinHeight="560"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Icon="Assets/icon128.png"
-        Background="#E0F7FF">
+        Background="#0F172A">
   <Window.Resources>
     <LinearGradientBrush x:Key="AppBackground" StartPoint="0,0" EndPoint="1,1">
       <GradientStop Color="#E0F7FF" Offset="0" />
       <GradientStop Color="#F8FBFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="DashboardBackground" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#1E293B" Offset="0" />
+      <GradientStop Color="#0F172A" Offset="1" />
     </LinearGradientBrush>
 
     <Style x:Key="PrimaryButton" TargetType="Button">
@@ -46,6 +51,68 @@
     <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
       <Setter Property="Background" Value="#EEF2FF" />
       <Setter Property="Foreground" Value="#3730A3" />
+    </Style>
+
+    <Style x:Key="NavButton" TargetType="Button">
+      <Setter Property="Height" Value="36" />
+      <Setter Property="MinWidth" Value="104" />
+      <Setter Property="Padding" Value="14,0" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#94A3B8" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="18">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Foreground" Value="White" />
+          <Setter Property="Background" Value="#253149" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="LinkButton" TargetType="Button">
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#CBD5E1" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Foreground" Value="White" />
+          <Setter Property="Background" Value="#1E293B" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="DarkMetricCard" TargetType="Border">
+      <Setter Property="Background" Value="#243044" />
+      <Setter Property="BorderBrush" Value="#334155" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="16" />
+      <Setter Property="Margin" Value="0,0,14,14" />
     </Style>
 
     <Style TargetType="TextBox">
@@ -122,6 +189,12 @@
                     Margin="0,4,0,0"
                     Click="LoginButton_Click" />
 
+            <Button x:Name="RegisterButton"
+                    Content="Create account"
+                    Style="{StaticResource SecondaryButton}"
+                    Margin="0,8,0,0"
+                    Click="ShowRegisterButton_Click" />
+
             <TextBlock x:Name="MessageTextBlock"
                        MinHeight="16"
                        FontSize="12"
@@ -138,13 +211,26 @@
       </StackPanel>
     </Grid>
 
-    <Grid x:Name="LoggedInView" Margin="16" Visibility="Collapsed">
+    <Grid x:Name="RegisterView" Margin="16" Visibility="Collapsed">
       <StackPanel VerticalAlignment="Center">
         <Image Source="Assets/icon128.png"
                Width="72"
                Height="56"
                Stretch="Uniform"
                Margin="0,0,0,10" />
+
+        <TextBlock Text="Create KungFlow Account"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="#1F2937"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,6" />
+
+        <TextBlock Text="Register once, then use the desktop focus agent"
+                   FontSize="13"
+                   Foreground="#6B7280"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,16" />
 
         <Border Background="White"
                 CornerRadius="14"
@@ -154,160 +240,441 @@
           </Border.Effect>
 
           <StackPanel>
-            <TextBlock Text="KungFlow Desktop"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       Foreground="#1F2937"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,8" />
-
-            <TextBlock x:Name="LoggedInEmailTextBlock"
+            <TextBlock Text="Username"
                        FontSize="13"
-                       Foreground="#6B7280"
-                       TextAlignment="Center"
-                       Margin="0,0,0,14" />
+                       FontWeight="Bold"
+                       Foreground="#374151"
+                       Margin="0,0,0,6" />
+            <TextBox x:Name="RegisterUsernameTextBox"
+                     Text="demo-user"
+                     Margin="0,0,0,12" />
 
-            <Grid Margin="0,0,0,14">
-              <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-              </Grid.RowDefinitions>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-              </Grid.ColumnDefinitions>
+            <TextBlock Text="Email"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#374151"
+                       Margin="0,0,0,6" />
+            <TextBox x:Name="RegisterEmailTextBox"
+                     Text="user@example.com"
+                     Margin="0,0,0,12" />
 
-              <TextBlock Grid.Row="0"
-                         Grid.Column="0"
-                         Text="State"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="LoadStateTextBlock"
-                         Grid.Row="0"
-                         Grid.Column="1"
-                         Text="Waiting"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
+            <TextBlock Text="Password"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#374151"
+                       Margin="0,0,0,6" />
+            <PasswordBox x:Name="RegisterPasswordBox"
+                         Margin="0,0,0,12" />
 
-              <TextBlock Grid.Row="1"
-                         Grid.Column="0"
-                         Text="Score"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="ScoreTextBlock"
-                         Grid.Row="1"
-                         Grid.Column="1"
-                         Text="-"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
+            <Button x:Name="CreateAccountButton"
+                    Content="Register"
+                    Style="{StaticResource PrimaryButton}"
+                    Margin="0,4,0,0"
+                    Click="RegisterButton_Click" />
 
-              <TextBlock Grid.Row="2"
-                         Grid.Column="0"
-                         Text="Baseline"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="BaselineTextBlock"
-                         Grid.Row="2"
-                         Grid.Column="1"
-                         Text="-"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
+            <Button x:Name="BackToLoginButton"
+                    Content="Back to login"
+                    Style="{StaticResource SecondaryButton}"
+                    Margin="0,8,0,0"
+                    Click="BackToLoginButton_Click" />
 
-              <TextBlock Grid.Row="3"
-                         Grid.Column="0"
-                         Text="Progress"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="BaselineProgressTextBlock"
-                         Grid.Row="3"
-                         Grid.Column="1"
-                         Text="-"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
-
-              <TextBlock Grid.Row="4"
-                         Grid.Column="0"
-                         Text="Focus recommendation"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="NotificationRecommendationTextBlock"
-                         Grid.Row="4"
-                         Grid.Column="1"
-                         Text="-"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
-
-              <TextBlock Grid.Row="5"
-                         Grid.Column="0"
-                         Text="KungFlow focus state"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,8" />
-              <TextBlock x:Name="LocalFocusModeTextBlock"
-                         Grid.Row="5"
-                         Grid.Column="1"
-                         Text="Off"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right"
-                         Margin="0,0,0,8" />
-
-              <TextBlock Grid.Row="6"
-                         Grid.Column="0"
-                         Text="Last update"
-                         FontSize="12"
-                         Foreground="#6B7280"
-                         Margin="0,0,12,0" />
-              <TextBlock x:Name="LastStatusUpdateTextBlock"
-                         Grid.Row="6"
-                         Grid.Column="1"
-                         Text="Never"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         Foreground="#111827"
-                         TextAlignment="Right" />
-            </Grid>
-
-            <TextBlock x:Name="DesktopStatusMessageTextBlock"
+            <TextBlock x:Name="RegisterMessageTextBlock"
                        MinHeight="16"
                        FontSize="12"
-                       Foreground="#6B7280"
                        TextAlignment="Center"
-                       Margin="0,0,0,12" />
-
-            <Button x:Name="LogoutButton"
-                    Content="Logout"
-                    Style="{StaticResource SecondaryButton}"
-                    Click="LogoutButton_Click" />
+                       Margin="0,10,0,0" />
           </StackPanel>
         </Border>
       </StackPanel>
+    </Grid>
+
+    <Grid x:Name="LoggedInView" Visibility="Collapsed" Background="{StaticResource DashboardBackground}">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0"
+              Background="#0F172A"
+              BorderBrush="#1E293B"
+              BorderThickness="0,0,0,1"
+              Padding="28,8">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0"
+                      Orientation="Horizontal"
+                      VerticalAlignment="Center">
+            <Image Source="Assets/icon128.png"
+                   Width="48"
+                   Height="34"
+                   Stretch="Uniform"
+                   Margin="0,0,10,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="KungFlow"
+                         FontSize="16"
+                         FontWeight="Bold"
+                         Foreground="White" />
+              <TextBlock x:Name="LoggedInEmailTextBlock"
+                         FontSize="11"
+                         Foreground="#94A3B8" />
+            </StackPanel>
+          </StackPanel>
+
+          <Border Grid.Column="1"
+                  Background="#1B2638"
+                  CornerRadius="19"
+                  Padding="4">
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="StatusNavButton"
+                      Content="Status"
+                      Style="{StaticResource NavButton}"
+                      Click="StatusNavButton_Click" />
+              <Button x:Name="StatisticsNavButton"
+                      Content="Statistics"
+                      Style="{StaticResource NavButton}"
+                      Click="StatisticsNavButton_Click" />
+              <Button x:Name="SettingsNavButton"
+                      Content="Settings"
+                      Style="{StaticResource NavButton}"
+                      Click="SettingsNavButton_Click" />
+            </StackPanel>
+          </Border>
+
+          <StackPanel Grid.Column="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center">
+            <Button x:Name="PrivacyNavButton"
+                    Content="Privacy Policy"
+                    Style="{StaticResource LinkButton}"
+                    Click="PrivacyNavButton_Click" />
+            <Button x:Name="LogoutButton"
+                    Content="Logout"
+                    Style="{StaticResource LinkButton}"
+                    Margin="4,0,0,0"
+                    Click="LogoutButton_Click" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="1">
+        <ScrollViewer x:Name="StatusPage"
+                      VerticalScrollBarVisibility="Auto">
+          <Grid MinHeight="560" Margin="32">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MaxWidth="620">
+              <TextBlock Text="YOUR CURRENT STATE"
+                         FontSize="12"
+                         FontWeight="Bold"
+                         Foreground="#7C8AA2"
+                         TextAlignment="Center"
+                         HorizontalAlignment="Center"
+                         Margin="0,0,0,12" />
+
+              <Ellipse x:Name="StatusOrbEllipse"
+                       Width="118"
+                       Height="118"
+                       Fill="#94A3B8"
+                       Stroke="#E2E8F0"
+                       StrokeThickness="12"
+                       Margin="0,0,0,22" />
+
+              <Border Background="#29344A"
+                      BorderBrush="#475569"
+                      BorderThickness="1"
+                      CornerRadius="14"
+                      Padding="12,6"
+                      HorizontalAlignment="Center"
+                      Margin="0,0,0,18">
+                <TextBlock x:Name="StatusBadgeTextBlock"
+                           Text="Waiting"
+                           FontSize="13"
+                           FontWeight="Bold"
+                           Foreground="#CBD5E1" />
+              </Border>
+
+              <TextBlock x:Name="StatusHeadlineTextBlock"
+                         Text="KungFlow is waiting for activity data."
+                         FontSize="28"
+                         FontWeight="Bold"
+                         Foreground="White"
+                         TextAlignment="Center"
+                         TextWrapping="Wrap"
+                         Margin="0,0,0,12" />
+
+              <TextBlock x:Name="StatusBodyTextBlock"
+                         Text="After the desktop agent collects enough computer activity, the firewall will decide whether interruptions should pass through."
+                         FontSize="15"
+                         Foreground="#AFC0D4"
+                         TextAlignment="Center"
+                         TextWrapping="Wrap"
+                         Margin="0,0,0,24" />
+
+              <UniformGrid Columns="2" Width="560">
+                <Border Background="#1B2638"
+                        BorderBrush="#334155"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14"
+                        Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="Firewall action"
+                               Foreground="#94A3B8"
+                               FontSize="12"
+                               FontWeight="Bold" />
+                    <TextBlock x:Name="NotificationRecommendationTextBlock"
+                               Text="-"
+                               FontSize="17"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <Border Background="#1B2638"
+                        BorderBrush="#334155"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14"
+                        Margin="10,0,0,0">
+                  <StackPanel>
+                    <TextBlock Text="Desktop protection"
+                               Foreground="#94A3B8"
+                               FontSize="12"
+                               FontWeight="Bold" />
+                    <TextBlock x:Name="LocalFocusModeTextBlock"
+                               Text="Inactive"
+                               FontSize="17"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               Margin="0,8,0,0" />
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+
+              <TextBlock x:Name="DesktopStatusMessageTextBlock"
+                         MinHeight="20"
+                         FontSize="12"
+                         Foreground="#94A3B8"
+                         TextAlignment="Center"
+                         TextWrapping="Wrap"
+                         Margin="0,18,0,0" />
+            </StackPanel>
+          </Grid>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="StatisticsPage"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="Collapsed">
+          <StackPanel Margin="40,34,40,40">
+            <TextBlock Text="STATISTICS"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="#7C8AA2"
+                       Margin="0,0,0,8" />
+            <TextBlock Text="Your Computer Behavior"
+                       FontSize="30"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,6" />
+            <TextBlock Text="A detailed look at the signals KungFlow tracks to understand cognitive load."
+                       FontSize="14"
+                       Foreground="#AFC0D4"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,28" />
+
+            <UniformGrid Columns="3">
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Open windows" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentOpenWindowsTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Window switches" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentWindowSwitchesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Key presses" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentKeyPressesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Delete/Backspace" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentDeleteKeyTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Typing speed" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentTypingSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Mouse speed" Foreground="#94A3B8" />
+                  <TextBlock x:Name="CurrentMouseSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                </StackPanel>
+              </Border>
+            </UniformGrid>
+
+            <UniformGrid Columns="4" Margin="0,8,0,18">
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Load state" Foreground="#94A3B8" />
+                  <TextBlock x:Name="LoadStateTextBlock" Text="Waiting" FontSize="16" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" Margin="0,12,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Score" Foreground="#94A3B8" />
+                  <TextBlock x:Name="ScoreTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Baseline" Foreground="#94A3B8" />
+                  <TextBlock x:Name="BaselineTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource DarkMetricCard}">
+                <StackPanel>
+                  <TextBlock Text="Baseline progress" Foreground="#94A3B8" />
+                  <TextBlock x:Name="BaselineProgressTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                  <TextBlock x:Name="LastStatusUpdateTextBlock" Text="Never" Foreground="#94A3B8" Margin="0,4,0,0" />
+                </StackPanel>
+              </Border>
+            </UniformGrid>
+
+          </StackPanel>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="SettingsPage"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="Collapsed">
+          <StackPanel Margin="40,34,40,40">
+            <TextBlock Text="SETTINGS"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="#7C8AA2"
+                       Margin="0,0,0,8" />
+            <TextBlock Text="Firewall Controls"
+                       FontSize="30"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,6" />
+            <TextBlock Text="Choose what KungFlow may collect and which notification channels it should protect when the firewall turns red."
+                       FontSize="14"
+                       Foreground="#AFC0D4"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,28" />
+
+            <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,18">
+              <StackPanel>
+                <CheckBox x:Name="DataCollectionEnabledCheckBox"
+                          Content="Enable desktop activity collection"
+                          IsChecked="True"
+                          Foreground="White"
+                          FontWeight="Bold"
+                          Checked="DataCollectionEnabledCheckBox_Changed"
+                          Unchecked="DataCollectionEnabledCheckBox_Changed" />
+                <TextBlock Text="When disabled, KungFlow stops collecting desktop activity until you enable it again."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="22,8,0,0" />
+              </StackPanel>
+            </Border>
+
+            <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18">
+              <StackPanel>
+                <TextBlock Text="Notification firewall rules"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="0,0,0,14" />
+                <CheckBox x:Name="DefaultDndCheckBox"
+                          Content="Default protection: turn on Windows Do Not Disturb"
+                          Foreground="White"
+                          FontWeight="Bold"
+                          Checked="FirewallSettingsCheckBox_Changed"
+                          Unchecked="FirewallSettingsCheckBox_Changed" />
+                <TextBlock Text="Use this as broad protection when the firewall reaches red. Real Windows DND integration is still mocked in this prototype."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="22,8,0,14" />
+
+                <CheckBox x:Name="WhatsAppFirewallCheckBox"
+                          Content="WhatsApp"
+                          Foreground="White"
+                          Checked="FirewallSettingsCheckBox_Changed"
+                          Unchecked="FirewallSettingsCheckBox_Changed" />
+                <CheckBox x:Name="OutlookFirewallCheckBox"
+                          Content="Outlook"
+                          Foreground="White"
+                          Margin="0,8,0,0"
+                          Checked="FirewallSettingsCheckBox_Changed"
+                          Unchecked="FirewallSettingsCheckBox_Changed" />
+
+                <TextBlock x:Name="FirewallSettingsSummaryTextBlock"
+                           Text="No application-specific firewall rules selected."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,0" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="PrivacyPage"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="Collapsed">
+          <StackPanel Margin="40,34,40,40">
+            <TextBlock Text="PRIVACY POLICY"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Foreground="#7C8AA2"
+                       Margin="0,0,0,8" />
+            <TextBlock Text="What KungFlow Stores"
+                       FontSize="30"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Margin="0,0,0,6" />
+            <TextBlock Text="This prototype stores behavioral metadata only, so the team can demonstrate overload detection without collecting typed content."
+                       FontSize="14"
+                       Foreground="#AFC0D4"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,28" />
+
+            <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="20">
+              <StackPanel>
+                <TextBlock Text="KungFlow stores behavioral metadata used to estimate cognitive load. It does not store typed text content."
+                           TextWrapping="Wrap"
+                           Foreground="#E2E8F0"
+                           Margin="0,0,0,14" />
+                <TextBlock Text="Collected desktop metadata includes open window count, active window switches, keypress counts, Delete/Backspace counts, typing rate, mouse movement speed, timestamps, and calculated cognitive load state."
+                           TextWrapping="Wrap"
+                           Foreground="#E2E8F0"
+                           Margin="0,0,0,14" />
+                <TextBlock Text="This prototype stores data in the local development database through the KungFlow server. Future versions should include retention controls, export/delete options, and explicit consent screens."
+                           TextWrapping="Wrap"
+                           Foreground="#E2E8F0" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
     </Grid>
   </Grid>
 </Window>

@@ -94,7 +94,9 @@ function createSqlServerStore({
         .input("Platform", sql.NVarChar(50), sample.platform)
         .input("Timestamp", sql.DateTime2, new Date(sample.timestamp))
         .input("OpenTabsCount", sql.Int, toNullableNumber(metrics.openTabsCount))
+        .input("OpenWindowsCount", sql.Int, toNullableNumber(metrics.openWindowsCount))
         .input("TabSwitchCount", sql.Int, toNullableNumber(metrics.tabSwitchCount))
+        .input("WindowSwitchCount", sql.Int, toNullableNumber(metrics.windowSwitchCount))
         .input("DeleteKeyCount", sql.Int, toNullableNumber(metrics.deleteKeyCount))
         .input("KeyPressCount", sql.Int, toNullableNumber(metrics.keyPressCount))
         .input("TypingSpeed", sql.Float, toNullableNumber(metrics.typingSpeed))
@@ -187,7 +189,9 @@ function toMetricsSample(row) {
     timestamp: toIsoString(row.Timestamp),
     metrics: {
       openTabsCount: row.OpenTabsCount,
+      openWindowsCount: row.OpenWindowsCount,
       tabSwitchCount: row.TabSwitchCount,
+      windowSwitchCount: row.WindowSwitchCount,
       deleteKeyCount: row.DeleteKeyCount,
       keyPressCount: row.KeyPressCount,
       typingSpeed: row.TypingSpeed,

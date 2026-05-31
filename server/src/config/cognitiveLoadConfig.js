@@ -4,7 +4,9 @@ const defaultCognitiveLoadConfig = {
   baselineEmaAlpha: 0.35,
   metricWeights: {
     openTabsCount: 1,
+    openWindowsCount: 1,
     tabSwitchCount: 4,
+    windowSwitchCount: 4,
     deleteKeyCount: 3,
     keyPressCount: 0.2,
     typingSpeed: 0.5,

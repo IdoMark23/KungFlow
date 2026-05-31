@@ -17,7 +17,9 @@ BEGIN
             CHECK (Platform IN ('extension', 'desktop', 'web', 'mobile')),
         Timestamp DATETIME2 NOT NULL,
         OpenTabsCount INT NULL,
+        OpenWindowsCount INT NULL,
         TabSwitchCount INT NULL,
+        WindowSwitchCount INT NULL,
         DeleteKeyCount INT NULL,
         KeyPressCount INT NULL,
         TypingSpeed FLOAT NULL,
@@ -33,6 +35,20 @@ IF COL_LENGTH(N'dbo.MetricsSamples', N'MouseSpeed') IS NULL
 BEGIN
     ALTER TABLE dbo.MetricsSamples
     ADD MouseSpeed FLOAT NULL;
+END;
+GO
+
+IF COL_LENGTH(N'dbo.MetricsSamples', N'OpenWindowsCount') IS NULL
+BEGIN
+    ALTER TABLE dbo.MetricsSamples
+    ADD OpenWindowsCount INT NULL;
+END;
+GO
+
+IF COL_LENGTH(N'dbo.MetricsSamples', N'WindowSwitchCount') IS NULL
+BEGIN
+    ALTER TABLE dbo.MetricsSamples
+    ADD WindowSwitchCount INT NULL;
 END;
 GO
 
@@ -209,7 +225,9 @@ CREATE OR ALTER PROCEDURE dbo.CreateMetricsSample
     @Platform NVARCHAR(50),
     @Timestamp DATETIME2,
     @OpenTabsCount INT = NULL,
+    @OpenWindowsCount INT = NULL,
     @TabSwitchCount INT = NULL,
+    @WindowSwitchCount INT = NULL,
     @DeleteKeyCount INT = NULL,
     @KeyPressCount INT = NULL,
     @TypingSpeed FLOAT = NULL,
@@ -220,16 +238,19 @@ BEGIN
 
     INSERT INTO dbo.MetricsSamples (
         UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed
+        OpenTabsCount, OpenWindowsCount, TabSwitchCount, WindowSwitchCount,
+        DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed
     )
     VALUES (
         @UserId, @Platform, @Timestamp,
-        @OpenTabsCount, @TabSwitchCount, @DeleteKeyCount, @KeyPressCount, @TypingSpeed, @MouseSpeed
+        @OpenTabsCount, @OpenWindowsCount, @TabSwitchCount, @WindowSwitchCount,
+        @DeleteKeyCount, @KeyPressCount, @TypingSpeed, @MouseSpeed
     );
 
     SELECT
         Id, UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
+        OpenTabsCount, OpenWindowsCount, TabSwitchCount, WindowSwitchCount,
+        DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
         CreatedAt
     FROM dbo.MetricsSamples
     WHERE Id = SCOPE_IDENTITY();
@@ -244,7 +265,8 @@ BEGIN
 
     SELECT
         Id, UserId, Platform, Timestamp,
-        OpenTabsCount, TabSwitchCount, DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
+        OpenTabsCount, OpenWindowsCount, TabSwitchCount, WindowSwitchCount,
+        DeleteKeyCount, KeyPressCount, TypingSpeed, MouseSpeed,
         CreatedAt
     FROM dbo.MetricsSamples
     WHERE UserId = @UserId

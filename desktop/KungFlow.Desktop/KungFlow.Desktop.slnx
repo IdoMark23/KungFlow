@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="KungFlow.Desktop.Agent/KungFlow.Desktop.Agent.csproj" />
   <Project Path="KungFlow.Desktop/KungFlow.Desktop.csproj" />
   <Project Path="KungFlow.Desktop.UI/KungFlow.Desktop.UI.csproj" />
 </Solution>
