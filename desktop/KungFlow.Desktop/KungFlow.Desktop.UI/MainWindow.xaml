@@ -12,8 +12,8 @@
         Background="#0F172A">
   <Window.Resources>
     <LinearGradientBrush x:Key="AppBackground" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#E0F7FF" Offset="0" />
-      <GradientStop Color="#F8FBFF" Offset="1" />
+      <GradientStop Color="#1E293B" Offset="0" />
+      <GradientStop Color="#0F172A" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="DashboardBackground" StartPoint="0,0" EndPoint="0,1">
@@ -49,8 +49,8 @@
     </Style>
 
     <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-      <Setter Property="Background" Value="#EEF2FF" />
-      <Setter Property="Foreground" Value="#3730A3" />
+      <Setter Property="Background" Value="#1B2638" />
+      <Setter Property="Foreground" Value="#E2E8F0" />
     </Style>
 
     <Style x:Key="NavButton" TargetType="Button">
@@ -148,17 +148,19 @@
         <TextBlock Text="KungFlow Login"
                    FontSize="18"
                    FontWeight="Bold"
-                   Foreground="#1F2937"
+                   Foreground="White"
                    HorizontalAlignment="Center"
                    Margin="0,0,0,6" />
 
         <TextBlock Text="Sign in to sync KungFlow metrics"
                    FontSize="13"
-                   Foreground="#6B7280"
+                   Foreground="#AFC0D4"
                    HorizontalAlignment="Center"
                    Margin="0,0,0,16" />
 
-        <Border Background="White"
+        <Border Background="#1B2638"
+                BorderBrush="#334155"
+                BorderThickness="1"
                 CornerRadius="14"
                 Padding="16">
           <Border.Effect>
@@ -169,7 +171,7 @@
             <TextBlock Text="Email"
                        FontSize="13"
                        FontWeight="Bold"
-                       Foreground="#374151"
+                       Foreground="#CBD5E1"
                        Margin="0,0,0,6" />
             <TextBox x:Name="EmailTextBox"
                      Text="user@example.com"
@@ -178,7 +180,7 @@
             <TextBlock Text="Password"
                        FontSize="13"
                        FontWeight="Bold"
-                       Foreground="#374151"
+                       Foreground="#CBD5E1"
                        Margin="0,0,0,6" />
             <PasswordBox x:Name="PasswordBox"
                          Margin="0,0,0,12" />
@@ -203,7 +205,7 @@
 
             <TextBlock Text="Requires the local KungFlow server on port 3000."
                        FontSize="12"
-                       Foreground="#6B7280"
+                       Foreground="#94A3B8"
                        TextAlignment="Center"
                        Margin="0,12,0,0" />
           </StackPanel>
@@ -222,17 +224,19 @@
         <TextBlock Text="Create KungFlow Account"
                    FontSize="18"
                    FontWeight="Bold"
-                   Foreground="#1F2937"
+                   Foreground="White"
                    HorizontalAlignment="Center"
                    Margin="0,0,0,6" />
 
         <TextBlock Text="Register once, then use the desktop focus agent"
                    FontSize="13"
-                   Foreground="#6B7280"
+                   Foreground="#AFC0D4"
                    HorizontalAlignment="Center"
                    Margin="0,0,0,16" />
 
-        <Border Background="White"
+        <Border Background="#1B2638"
+                BorderBrush="#334155"
+                BorderThickness="1"
                 CornerRadius="14"
                 Padding="16">
           <Border.Effect>
@@ -243,7 +247,7 @@
             <TextBlock Text="Username"
                        FontSize="13"
                        FontWeight="Bold"
-                       Foreground="#374151"
+                       Foreground="#CBD5E1"
                        Margin="0,0,0,6" />
             <TextBox x:Name="RegisterUsernameTextBox"
                      Text="demo-user"
@@ -252,7 +256,7 @@
             <TextBlock Text="Email"
                        FontSize="13"
                        FontWeight="Bold"
-                       Foreground="#374151"
+                       Foreground="#CBD5E1"
                        Margin="0,0,0,6" />
             <TextBox x:Name="RegisterEmailTextBox"
                      Text="user@example.com"
@@ -261,7 +265,7 @@
             <TextBlock Text="Password"
                        FontSize="13"
                        FontWeight="Bold"
-                       Foreground="#374151"
+                       Foreground="#CBD5E1"
                        Margin="0,0,0,6" />
             <PasswordBox x:Name="RegisterPasswordBox"
                          Margin="0,0,0,12" />

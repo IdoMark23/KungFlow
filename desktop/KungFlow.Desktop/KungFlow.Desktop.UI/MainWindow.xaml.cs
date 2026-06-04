@@ -460,12 +460,12 @@ public partial class MainWindow : Window
         if (status.State == "collecting_baseline" || status.State == "no_metrics")
         {
             return new FirewallPresentation(
-                "Orange - Calibrating",
+                "Yellow - Calibrating",
                 "KungFlow is learning your normal work rhythm.",
                 "The firewall is not fully active yet. Keep working normally so the baseline becomes more accurate.",
                 "Learning",
-                MediaColor.FromRgb(217, 119, 6),
-                MediaColor.FromRgb(254, 215, 170));
+                MediaColor.FromRgb(234, 179, 8),
+                MediaColor.FromRgb(254, 240, 138));
         }
 
         return new FirewallPresentation(
@@ -496,14 +496,14 @@ public partial class MainWindow : Window
     {
         MessageTextBlock.Text = message;
         MessageTextBlock.Foreground = new SolidColorBrush(
-            isError ? MediaColor.FromRgb(220, 38, 38) : MediaColor.FromRgb(107, 114, 128));
+            isError ? MediaColor.FromRgb(248, 113, 113) : MediaColor.FromRgb(175, 192, 212));
     }
 
     private void SetRegisterMessage(string message, bool isError = false)
     {
         RegisterMessageTextBlock.Text = message;
         RegisterMessageTextBlock.Foreground = new SolidColorBrush(
-            isError ? MediaColor.FromRgb(220, 38, 38) : MediaColor.FromRgb(107, 114, 128));
+            isError ? MediaColor.FromRgb(248, 113, 113) : MediaColor.FromRgb(175, 192, 212));
     }
 
     private void SetDesktopStatusMessage(string message, bool isError = false)
