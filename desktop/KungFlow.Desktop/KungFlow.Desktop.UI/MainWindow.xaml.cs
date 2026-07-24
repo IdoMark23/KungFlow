@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private bool isRefreshingStatus;
     private bool isSendingMetrics;
     private bool isExitRequested;
+    private bool? manualNotificationOverride;
 
     public MainWindow()
     {
@@ -37,6 +38,7 @@ public partial class MainWindow : Window
 
         ConfigureTrayIcon();
         UpdateFirewallSettingsSummary();
+        UpdateManualNotificationControls();
         ShowDashboardPage(DashboardPage.Status);
     }
 
@@ -156,6 +158,7 @@ public partial class MainWindow : Window
     {
         session = null;
         metricsCollector.Stop();
+        manualNotificationOverride = null;
         focusModeController.SetEnabled(false);
         PasswordBox.Clear();
         SetDesktopStatusMessage("");
@@ -267,7 +270,7 @@ public partial class MainWindow : Window
                 session.AccessToken,
                 CancellationToken.None);
 
-            focusModeController.SetEnabled(status.ShouldSilenceNotifications);
+            ApplyAutomaticNotificationState(status.ShouldSilenceNotifications);
             UpdateStatusView(status);
             SetDesktopStatusMessage("Status synced with KungFlow server.");
         }
@@ -308,7 +311,7 @@ public partial class MainWindow : Window
 
             if (response.Status is not null)
             {
-                focusModeController.SetEnabled(response.Status.ShouldSilenceNotifications);
+                ApplyAutomaticNotificationState(response.Status.ShouldSilenceNotifications);
                 UpdateStatusView(response.Status);
             }
 
@@ -392,6 +395,61 @@ public partial class MainWindow : Window
             FirewallTargetCatalog.OutlookId,
             OutlookFirewallCheckBox.IsChecked == true);
         UpdateFirewallSettingsSummary();
+    }
+
+    private void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        bool shouldSilenceNotifications = !focusModeController.IsEnabled();
+
+        try
+        {
+            focusModeController.SetEnabled(shouldSilenceNotifications);
+            manualNotificationOverride = shouldSilenceNotifications;
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            SetDesktopStatusMessage(
+                shouldSilenceNotifications
+                    ? "Windows notifications were turned off manually."
+                    : "Windows notifications were turned on manually.");
+        }
+        catch (Exception ex)
+        {
+            SetDesktopStatusMessage(ex.Message, true);
+        }
+    }
+
+    private void ApplyAutomaticNotificationState(bool shouldSilenceNotifications)
+    {
+        focusModeController.SetEnabled(
+            manualNotificationOverride ?? shouldSilenceNotifications);
+        UpdateManualNotificationControls();
+    }
+
+    private void UpdateManualNotificationControls()
+    {
+        bool notificationsAreSilenced = focusModeController.IsEnabled();
+        ToggleNotificationsButton.Content = notificationsAreSilenced
+            ? "Turn on notifications"
+            : "Turn off notifications";
+        string controlMode = manualNotificationOverride.HasValue
+            ? "manual override"
+            : "automatic control";
+        ManualNotificationStatusTextBlock.Text =
+            $"Notifications are {(notificationsAreSilenced ? "off" : "on")} ({controlMode})";
+        ManualNotificationStatusTextBlock.Foreground = new SolidColorBrush(
+            notificationsAreSilenced
+                ? MediaColor.FromRgb(248, 113, 113)
+                : MediaColor.FromRgb(74, 222, 128));
+    }
+
+    private void UpdateLocalFocusModeIndicator()
+    {
+        bool isFocusModeEnabled = focusModeController.IsEnabled();
+        LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "Active" : "Inactive";
+        LocalFocusModeTextBlock.Foreground = new SolidColorBrush(
+            isFocusModeEnabled
+                ? MediaColor.FromRgb(220, 38, 38)
+                : MediaColor.FromRgb(22, 163, 74));
     }
 
     private void ApplyDataCollectionState()

@@ -2,29 +2,73 @@ namespace KungFlow.Desktop.Agent;
 
 public sealed class LocalFocusModeController
 {
-    private const string EnabledValue = "on";
-    private const string DisabledValue = "off";
+    private const string RegistryPath =
+        @"HKCU:\Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications";
+    private const string RegistryValueName = "NoToastApplicationNotification";
 
-    private static readonly string StateDirectoryPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "KungFlow");
-
-    private static readonly string StateFilePath = Path.Combine(StateDirectoryPath, "desktop-focus-state.txt");
+    private bool isEnabled = ReadCurrentState();
 
     public void SetEnabled(bool isEnabled)
     {
-        Directory.CreateDirectory(StateDirectoryPath);
-        File.WriteAllText(StateFilePath, isEnabled ? EnabledValue : DisabledValue);
+        if (this.isEnabled == isEnabled)
+        {
+            return;
+        }
+
+        string value = isEnabled ? "1" : "0";
+        string command =
+            $"$path='{RegistryPath}'; " +
+            "New-Item -Path $path -Force | Out-Null; " +
+            $"New-ItemProperty -Path $path -Name '{RegistryValueName}' " +
+            $"-PropertyType DWord -Value {value} -Force | Out-Null";
+
+        RunPowerShell(command);
+        this.isEnabled = isEnabled;
     }
 
     public bool IsEnabled()
     {
-        if (!File.Exists(StateFilePath))
+        return isEnabled;
+    }
+
+    private static bool ReadCurrentState()
+    {
+        string command =
+            $"$value=(Get-ItemProperty -Path '{RegistryPath}' -Name '{RegistryValueName}' " +
+            $"-ErrorAction SilentlyContinue).{RegistryValueName}; " +
+            "if ($null -eq $value) { '0' } else { $value }";
+
+        string output = RunPowerShell(command);
+        return output.Trim() == "1";
+    }
+
+    private static string RunPowerShell(string command)
+    {
+        using System.Diagnostics.Process process = new();
+        process.StartInfo = new System.Diagnostics.ProcessStartInfo
         {
-            return false;
+            FileName = "powershell.exe",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        process.StartInfo.ArgumentList.Add("-NoProfile");
+        process.StartInfo.ArgumentList.Add("-NonInteractive");
+        process.StartInfo.ArgumentList.Add("-Command");
+        process.StartInfo.ArgumentList.Add(command);
+
+        process.Start();
+        string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Windows notification setting could not be changed: {error.Trim()}");
         }
 
-        string state = File.ReadAllText(StateFilePath).Trim();
-        return string.Equals(state, EnabledValue, StringComparison.OrdinalIgnoreCase);
+        return output;
     }
 }

@@ -603,6 +603,27 @@
 
             <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18">
               <StackPanel>
+                <TextBlock Text="Manual notification control"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="0,0,0,8" />
+                <TextBlock Text="Temporarily override KungFlow and turn all Windows toast notifications off or on."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,14" />
+                <Button x:Name="ToggleNotificationsButton"
+                        Content="Turn off notifications"
+                        Style="{StaticResource PrimaryButton}"
+                        Width="230"
+                        HorizontalAlignment="Left"
+                        Click="ToggleNotificationsButton_Click" />
+                <TextBlock x:Name="ManualNotificationStatusTextBlock"
+                           Text="Notifications are on"
+                           Foreground="#AFC0D4"
+                           FontWeight="Bold"
+                           Margin="0,10,0,22" />
+
                 <TextBlock Text="Notification firewall rules"
                            FontSize="18"
                            FontWeight="Bold"
@@ -614,7 +635,7 @@
                           FontWeight="Bold"
                           Checked="FirewallSettingsCheckBox_Changed"
                           Unchecked="FirewallSettingsCheckBox_Changed" />
-                <TextBlock Text="Use this as broad protection when the firewall reaches red. Real Windows DND integration is still mocked in this prototype."
+                <TextBlock Text="Use this as broad protection when the firewall reaches red."
                            Foreground="#AFC0D4"
                            TextWrapping="Wrap"
                            Margin="22,8,0,14" />

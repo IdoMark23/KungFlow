@@ -12,3 +12,9 @@ UpgradeLog.htm
 node_modules/
 npm-debug.log*
 *.log
+
+# Local .NET SDK and generated desktop build artifacts
+.dotnet-home/
+.dotnet-sdk/
+dotnet-install.ps1
+desktop/build-updated/
