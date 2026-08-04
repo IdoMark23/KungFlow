@@ -18,3 +18,9 @@ npm-debug.log*
 .dotnet-sdk/
 dotnet-install.ps1
 desktop/build-updated/
+
+# Local diagnostics and browser-automation screenshots
+login-check*.png
+login-after-submit*.png
+login-automation*.png
+tmp_*.cs
