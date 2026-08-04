@@ -5,7 +5,7 @@ function createSqlServerStore({
 } = {}) {
   const server = process.env.SQLSERVER_SERVER || "(localdb)\\MSSQLLocalDB";
   const database = process.env.SQLSERVER_DATABASE || "KungFlowDB";
-  const driver = process.env.SQLSERVER_DRIVER || "ODBC Driver 17 for SQL Server";
+  const driver = process.env.SQLSERVER_DRIVER || "ODBC Driver 18 for SQL Server";
   const connectionConfig = {
     connectionString:
       connectionString ||
