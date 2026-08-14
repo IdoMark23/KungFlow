@@ -1,15 +1,26 @@
-const sql = require("mssql/msnodesqlv8");
+const sql = require("mssql");
 
 function createSqlServerStore({
   connectionString = process.env.SQLSERVER_CONNECTION_STRING
 } = {}) {
-  const server = process.env.SQLSERVER_SERVER || "(localdb)\\MSSQLLocalDB";
-  const database = process.env.SQLSERVER_DATABASE || "KungFlowDB";
-  const driver = process.env.SQLSERVER_DRIVER || "ODBC Driver 17 for SQL Server";
-  const connectionConfig = {
-    connectionString:
-      connectionString ||
-      `Driver={${driver}};Server=${server};Database=${database};Trusted_Connection=Yes;Encrypt=no;TrustServerCertificate=yes;`
+  const connectionConfig = connectionString || {
+    server: process.env.DB_HOST || process.env.SQLSERVER_SERVER || "127.0.0.1",
+    port: toPort(process.env.DB_PORT || process.env.SQLSERVER_PORT),
+    database: process.env.DB_NAME || process.env.SQLSERVER_DATABASE || "KungFlowDB",
+    user: process.env.DB_USER || process.env.SQLSERVER_USER,
+    password: process.env.DB_PASSWORD || process.env.SQLSERVER_PASSWORD,
+    options: {
+      encrypt: toBoolean(process.env.DB_ENCRYPT, true),
+      trustServerCertificate: toBoolean(
+        process.env.DB_TRUST_SERVER_CERTIFICATE,
+        false
+      )
+    },
+    pool: {
+      max: 10,
+      min: 0,
+      idleTimeoutMillis: 30000
+    }
   };
   let poolPromise = null;
 
@@ -229,6 +240,19 @@ function toNullableNumber(value) {
 
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function toPort(value) {
+  const port = Number(value || 1433);
+  return Number.isInteger(port) && port > 0 ? port : 1433;
+}
+
+function toBoolean(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+
+  return String(value).toLowerCase() === "true";
 }
 
 module.exports = { createSqlServerStore };
