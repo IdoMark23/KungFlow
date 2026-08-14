@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const { cognitiveLoadConfig, isDemoModeEnabled } = require("./config/cognitiveLoadConfig");
 const {
   cognitiveStateToStatus,
@@ -430,6 +431,8 @@ function createApp({ store = createInMemoryStore() } = {}) {
       status
     });
   }));
+
+  app.use(express.static(path.join(__dirname, "..", "public", "landing")));
 
   app.use((error, req, res, next) => {
     logWarn("http_request_failed", {
