@@ -203,7 +203,7 @@
                        TextAlignment="Center"
                        Margin="0,10,0,0" />
 
-            <TextBlock Text="Requires the local KungFlow server on port 3000."
+            <TextBlock Text="Connects securely to the KungFlow cloud service."
                        FontSize="12"
                        Foreground="#94A3B8"
                        TextAlignment="Center"

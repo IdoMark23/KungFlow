@@ -15,7 +15,7 @@ public sealed class KungFlowApiClient
     private readonly HttpClient httpClient;
 
     public KungFlowApiClient()
-        : this(new HttpClient { BaseAddress = new Uri("http://127.0.0.1:3000") })
+        : this(new HttpClient { BaseAddress = new Uri("https://34-46-238-54.sslip.io") })
     {
     }
 

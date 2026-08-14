@@ -1,4 +1,4 @@
-const KUNGFLOW_API_BASE_URL = "http://127.0.0.1:3000";
+const KUNGFLOW_API_BASE_URL = "https://34-46-238-54.sslip.io";
 
 async function kungFlowApiRequest(path, options = {}) {
   const response = await fetch(`${KUNGFLOW_API_BASE_URL}${path}`, {
