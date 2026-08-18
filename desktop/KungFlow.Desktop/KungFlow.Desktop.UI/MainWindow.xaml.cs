@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private bool isRefreshingStatus;
     private bool isSendingMetrics;
     private bool isExitRequested;
+    private bool? manualNotificationOverride;
 
     public MainWindow()
     {
@@ -36,7 +37,7 @@ public partial class MainWindow : Window
         metricsPollingTimer.Tick += MetricsPollingTimer_Tick;
 
         ConfigureTrayIcon();
-        UpdateFirewallSettingsSummary();
+        UpdateManualNotificationControls();
         ShowDashboardPage(DashboardPage.Status);
     }
 
@@ -156,6 +157,7 @@ public partial class MainWindow : Window
     {
         session = null;
         metricsCollector.Stop();
+        manualNotificationOverride = null;
         focusModeController.SetEnabled(false);
         PasswordBox.Clear();
         SetDesktopStatusMessage("");
@@ -267,7 +269,7 @@ public partial class MainWindow : Window
                 session.AccessToken,
                 CancellationToken.None);
 
-            focusModeController.SetEnabled(status.ShouldSilenceNotifications);
+            ApplyAutomaticNotificationState(status.ShouldSilenceNotifications);
             UpdateStatusView(status);
             SetDesktopStatusMessage("Status synced with KungFlow server.");
         }
@@ -308,7 +310,7 @@ public partial class MainWindow : Window
 
             if (response.Status is not null)
             {
-                focusModeController.SetEnabled(response.Status.ShouldSilenceNotifications);
+                ApplyAutomaticNotificationState(response.Status.ShouldSilenceNotifications);
                 UpdateStatusView(response.Status);
             }
 
@@ -379,19 +381,136 @@ public partial class MainWindow : Window
     private void DataCollectionEnabledCheckBox_Changed(object sender, RoutedEventArgs e)
     {
         agentSettings.IsDataCollectionEnabled = DataCollectionEnabledCheckBox.IsChecked == true;
+        DesktopDiagnosticLogger.Log(
+            "desktop_activity_collection_setting_changed",
+            new Dictionary<string, string?>
+            {
+                ["enabled"] = agentSettings.IsDataCollectionEnabled ? "true" : "false",
+                ["hasSession"] = session is null ? "false" : "true"
+            });
         ApplyDataCollectionState();
     }
 
-    private void FirewallSettingsCheckBox_Changed(object sender, RoutedEventArgs e)
+    private void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
     {
-        agentSettings.Firewall.UseDefaultDoNotDisturb = DefaultDndCheckBox.IsChecked == true;
-        agentSettings.Firewall.SetApplicationMuted(
-            FirewallTargetCatalog.WhatsAppId,
-            WhatsAppFirewallCheckBox.IsChecked == true);
-        agentSettings.Firewall.SetApplicationMuted(
-            FirewallTargetCatalog.OutlookId,
-            OutlookFirewallCheckBox.IsChecked == true);
-        UpdateFirewallSettingsSummary();
+        bool previousState = focusModeController.IsEnabled();
+        bool shouldSilenceNotifications = !focusModeController.IsEnabled();
+
+        DesktopDiagnosticLogger.Log(
+            "manual_notification_toggle_started",
+            new Dictionary<string, string?>
+            {
+                ["previousState"] = previousState ? "off" : "on",
+                ["requestedState"] = shouldSilenceNotifications ? "off" : "on"
+            });
+
+        try
+        {
+            focusModeController.SetEnabled(shouldSilenceNotifications);
+            manualNotificationOverride = shouldSilenceNotifications;
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            string message = shouldSilenceNotifications
+                ? "KungFlow Firewall activated manually. Windows notifications are off."
+                : "KungFlow Firewall deactivated manually. Windows notifications are on.";
+            SetDesktopStatusMessage(message);
+            DesktopDiagnosticLogger.Log(
+                "manual_notification_toggle_succeeded",
+                new Dictionary<string, string?>
+                {
+                    ["previousState"] = previousState ? "off" : "on",
+                    ["newState"] = focusModeController.IsEnabled() ? "off" : "on",
+                    ["message"] = message
+                });
+        }
+        catch (Exception ex)
+        {
+            SetDesktopStatusMessage(ex.Message, true);
+            DesktopDiagnosticLogger.Log(
+                "manual_notification_toggle_failed",
+                new Dictionary<string, string?>
+                {
+                    ["previousState"] = previousState ? "off" : "on",
+                    ["requestedState"] = shouldSilenceNotifications ? "off" : "on",
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
+        }
+    }
+
+    private async void ResumeAutomaticControlButton_Click(object sender, RoutedEventArgs e)
+    {
+        bool hadManualOverride = manualNotificationOverride.HasValue;
+        manualNotificationOverride = null;
+        UpdateManualNotificationControls();
+
+        DesktopDiagnosticLogger.Log(
+            "manual_notification_override_cleared",
+            new Dictionary<string, string?>
+            {
+                ["hadManualOverride"] = hadManualOverride ? "true" : "false",
+                ["currentNotificationsState"] = focusModeController.IsEnabled() ? "off" : "on"
+            });
+
+        SetDesktopStatusMessage("KungFlow automatic notification control resumed.");
+        await RefreshStatusAsync();
+    }
+
+    private void ApplyAutomaticNotificationState(bool shouldSilenceNotifications)
+    {
+        bool previousState = focusModeController.IsEnabled();
+        bool requestedState = manualNotificationOverride ?? shouldSilenceNotifications;
+
+        focusModeController.SetEnabled(requestedState);
+
+        bool currentState = focusModeController.IsEnabled();
+
+        if (previousState != currentState)
+        {
+            DesktopDiagnosticLogger.Log(
+                "automatic_notification_state_applied",
+                new Dictionary<string, string?>
+                {
+                    ["serverRecommendation"] = shouldSilenceNotifications ? "off" : "on",
+                    ["appliedState"] = currentState ? "off" : "on",
+                    ["controlMode"] = manualNotificationOverride.HasValue
+                        ? "manual override"
+                        : "automatic control"
+                });
+        }
+
+        UpdateManualNotificationControls();
+        UpdateLocalFocusModeIndicator();
+    }
+
+    private void UpdateManualNotificationControls()
+    {
+        bool notificationsAreSilenced = focusModeController.IsEnabled();
+        ToggleNotificationsButton.Content = notificationsAreSilenced
+            ? "Deactivate firewall"
+            : "Activate firewall";
+        string controlMode = manualNotificationOverride.HasValue
+            ? "manual override"
+            : "automatic control";
+        ManualNotificationStatusTextBlock.Text =
+            notificationsAreSilenced
+                ? $"Firewall is active. Windows notifications are off ({controlMode})"
+                : $"Firewall is inactive. Windows notifications are on ({controlMode})";
+        ResumeAutomaticControlButton.IsEnabled = manualNotificationOverride.HasValue;
+        ManualNotificationStatusTextBlock.Foreground = new SolidColorBrush(
+            notificationsAreSilenced
+                ? MediaColor.FromRgb(248, 113, 113)
+                : MediaColor.FromRgb(74, 222, 128));
+    }
+
+    private void UpdateLocalFocusModeIndicator()
+    {
+        bool isFocusModeEnabled = focusModeController.IsEnabled();
+        LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "Active" : "Inactive";
+        LocalFocusModeTextBlock.Foreground = new SolidColorBrush(
+            isFocusModeEnabled
+                ? MediaColor.FromRgb(220, 38, 38)
+                : MediaColor.FromRgb(22, 163, 74));
     }
 
     private void ApplyDataCollectionState()
@@ -407,6 +526,13 @@ public partial class MainWindow : Window
             metricsPollingTimer.Start();
             metricsSendTimer.Start();
             SetDesktopStatusMessage("Desktop activity collection is enabled.");
+            DesktopDiagnosticLogger.Log(
+                "desktop_activity_collection_started",
+                new Dictionary<string, string?>
+                {
+                    ["metricsPollingTimer"] = metricsPollingTimer.IsEnabled ? "running" : "stopped",
+                    ["metricsSendTimer"] = metricsSendTimer.IsEnabled ? "running" : "stopped"
+                });
             return;
         }
 
@@ -414,6 +540,13 @@ public partial class MainWindow : Window
         metricsPollingTimer.Stop();
         metricsCollector.Stop();
         SetDesktopStatusMessage("Desktop activity collection is disabled.");
+        DesktopDiagnosticLogger.Log(
+            "desktop_activity_collection_stopped",
+            new Dictionary<string, string?>
+            {
+                ["metricsPollingTimer"] = metricsPollingTimer.IsEnabled ? "running" : "stopped",
+                ["metricsSendTimer"] = metricsSendTimer.IsEnabled ? "running" : "stopped"
+            });
     }
 
     private void UpdateCurrentMetricsView(DesktopMetricsSnapshot snapshot)
@@ -424,24 +557,6 @@ public partial class MainWindow : Window
         CurrentDeleteKeyTextBlock.Text = snapshot.DeleteKeyCount.ToString();
         CurrentTypingSpeedTextBlock.Text = snapshot.TypingSpeed.ToString("0.0");
         CurrentMouseSpeedTextBlock.Text = snapshot.MouseSpeed.ToString("0.0");
-    }
-
-    private void UpdateFirewallSettingsSummary()
-    {
-        List<string> selectedRules = new();
-
-        if (agentSettings.Firewall.UseDefaultDoNotDisturb)
-        {
-            selectedRules.Add("Default Windows Do Not Disturb");
-        }
-
-        selectedRules.AddRange(FirewallTargetCatalog.Defaults
-            .Where(target => agentSettings.Firewall.IsApplicationMuted(target.Id))
-            .Select(target => target.DisplayName));
-
-        FirewallSettingsSummaryTextBlock.Text = selectedRules.Count == 0
-            ? "No application-specific firewall rules selected."
-            : $"Firewall rules selected: {string.Join(", ", selectedRules)}.";
     }
 
     private static FirewallPresentation GetFirewallPresentation(CurrentStatusResponse status)
@@ -511,6 +626,17 @@ public partial class MainWindow : Window
         DesktopStatusMessageTextBlock.Text = message;
         DesktopStatusMessageTextBlock.Foreground = new SolidColorBrush(
             isError ? MediaColor.FromRgb(248, 113, 113) : MediaColor.FromRgb(148, 163, 184));
+
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            DesktopDiagnosticLogger.Log(
+                "desktop_status_message",
+                new Dictionary<string, string?>
+                {
+                    ["isError"] = isError ? "true" : "false",
+                    ["message"] = message
+                });
+        }
     }
 
     private void ConfigureTrayIcon()
