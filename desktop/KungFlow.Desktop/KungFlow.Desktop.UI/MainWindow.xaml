@@ -579,7 +579,7 @@
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,6" />
-            <TextBlock Text="Choose what KungFlow may collect and which notification channels it should protect when the firewall turns red."
+            <TextBlock Text="Choose when KungFlow collects desktop signals and how the notification firewall protects you when overload is detected."
                        FontSize="14"
                        Foreground="#AFC0D4"
                        TextWrapping="Wrap"
@@ -603,60 +603,49 @@
 
             <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18">
               <StackPanel>
-                <TextBlock Text="Manual notification control"
+                <TextBlock Text="Manual firewall control"
                            FontSize="18"
                            FontWeight="Bold"
                            Foreground="White"
                            Margin="0,0,0,8" />
-                <TextBlock Text="Temporarily override KungFlow and turn all Windows toast notifications off or on."
+                <TextBlock Text="Use this to manually activate or deactivate the KungFlow Firewall. When active, KungFlow turns off Windows notifications through the operating system."
                            Foreground="#AFC0D4"
                            TextWrapping="Wrap"
                            Margin="0,0,0,14" />
-                <Button x:Name="ToggleNotificationsButton"
-                        Content="Turn off notifications"
-                        Style="{StaticResource PrimaryButton}"
-                        Width="230"
-                        HorizontalAlignment="Left"
-                        Click="ToggleNotificationsButton_Click" />
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="ToggleNotificationsButton"
+                          Content="Activate firewall"
+                          Style="{StaticResource PrimaryButton}"
+                          Width="230"
+                          HorizontalAlignment="Left"
+                          Click="ToggleNotificationsButton_Click" />
+                  <Button x:Name="ResumeAutomaticControlButton"
+                          Content="Resume automatic control"
+                          Style="{StaticResource SecondaryButton}"
+                          Width="220"
+                          Margin="12,0,0,0"
+                          HorizontalAlignment="Left"
+                          Click="ResumeAutomaticControlButton_Click" />
+                </StackPanel>
                 <TextBlock x:Name="ManualNotificationStatusTextBlock"
-                           Text="Notifications are on"
+                           Text="Firewall is inactive"
                            Foreground="#AFC0D4"
                            FontWeight="Bold"
                            Margin="0,10,0,22" />
 
-                <TextBlock Text="Notification firewall rules"
+                <TextBlock Text="How the firewall protects focus"
                            FontSize="18"
                            FontWeight="Bold"
                            Foreground="White"
-                           Margin="0,0,0,14" />
-                <CheckBox x:Name="DefaultDndCheckBox"
-                          Content="Default protection: turn on Windows Do Not Disturb"
-                          Foreground="White"
-                          FontWeight="Bold"
-                          Checked="FirewallSettingsCheckBox_Changed"
-                          Unchecked="FirewallSettingsCheckBox_Changed" />
-                <TextBlock Text="Use this as broad protection when the firewall reaches red."
+                           Margin="0,0,0,8" />
+                <TextBlock Text="When KungFlow detects red cognitive load, the desktop app activates the firewall by changing the Windows Notifications setting at the operating-system level."
                            Foreground="#AFC0D4"
                            TextWrapping="Wrap"
-                           Margin="22,8,0,14" />
-
-                <CheckBox x:Name="WhatsAppFirewallCheckBox"
-                          Content="WhatsApp"
-                          Foreground="White"
-                          Checked="FirewallSettingsCheckBox_Changed"
-                          Unchecked="FirewallSettingsCheckBox_Changed" />
-                <CheckBox x:Name="OutlookFirewallCheckBox"
-                          Content="Outlook"
-                          Foreground="White"
-                          Margin="0,8,0,0"
-                          Checked="FirewallSettingsCheckBox_Changed"
-                          Unchecked="FirewallSettingsCheckBox_Changed" />
-
-                <TextBlock x:Name="FirewallSettingsSummaryTextBlock"
-                           Text="No application-specific firewall rules selected."
+                           Margin="0,0,0,8" />
+                <TextBlock Text="While active, toast popups are blocked so interruptions do not break focus. When load returns to normal, KungFlow restores Windows Notifications."
                            Foreground="#AFC0D4"
                            TextWrapping="Wrap"
-                           Margin="0,16,0,0" />
+                           Margin="0,0,0,0" />
               </StackPanel>
             </Border>
           </StackPanel>

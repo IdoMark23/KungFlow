@@ -1,29 +1,40 @@
+using Microsoft.Win32;
+using System.Diagnostics;
+using System.Globalization;
+
 namespace KungFlow.Desktop.Agent;
 
 public sealed class LocalFocusModeController
 {
-    private const string RegistryPath =
-        @"HKCU:\Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications";
-    private const string RegistryValueName = "NoToastApplicationNotification";
+    private const string RegistrySubKey =
+        @"Software\Microsoft\Windows\CurrentVersion\PushNotifications";
+    private const string RegistryValueName = "ToastEnabled";
+    private const string LegacyPolicySubKey =
+        @"Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications";
+    private const string LegacyPolicyValueName = "NoToastApplicationNotification";
 
     private bool isEnabled = ReadCurrentState();
 
     public void SetEnabled(bool isEnabled)
     {
+        ClearLegacyPolicyOverride();
+
         if (this.isEnabled == isEnabled)
         {
             return;
         }
 
-        string value = isEnabled ? "1" : "0";
-        string command =
-            $"$path='{RegistryPath}'; " +
-            "New-Item -Path $path -Force | Out-Null; " +
-            $"New-ItemProperty -Path $path -Name '{RegistryValueName}' " +
-            $"-PropertyType DWord -Value {value} -Force | Out-Null";
-
-        RunPowerShell(command);
+        WriteToastEnabled(isEnabled ? 0 : 1);
+        RefreshWindowsPushNotificationService();
         this.isEnabled = isEnabled;
+
+        DesktopDiagnosticLogger.Log(
+            "windows_notifications_toggle_applied",
+            new Dictionary<string, string?>
+            {
+                ["notificationsState"] = isEnabled ? "off" : "on",
+                ["toastEnabled"] = isEnabled ? "0" : "1"
+            });
     }
 
     public bool IsEnabled()
@@ -33,19 +44,62 @@ public sealed class LocalFocusModeController
 
     private static bool ReadCurrentState()
     {
-        string command =
-            $"$value=(Get-ItemProperty -Path '{RegistryPath}' -Name '{RegistryValueName}' " +
-            $"-ErrorAction SilentlyContinue).{RegistryValueName}; " +
-            "if ($null -eq $value) { '0' } else { $value }";
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RegistrySubKey);
+        object? value = key?.GetValue(RegistryValueName);
 
-        string output = RunPowerShell(command);
-        return output.Trim() == "1";
+        if (value is null)
+        {
+            return false;
+        }
+
+        return Convert.ToInt32(value, CultureInfo.InvariantCulture) == 0;
+    }
+
+    private static void WriteToastEnabled(int value)
+    {
+        using RegistryKey key = Registry.CurrentUser.CreateSubKey(RegistrySubKey)
+            ?? throw new InvalidOperationException("Windows notification registry key could not be opened.");
+        key.SetValue(RegistryValueName, value, RegistryValueKind.DWord);
+    }
+
+    private static void ClearLegacyPolicyOverride()
+    {
+        try
+        {
+            using RegistryKey? key = Registry.CurrentUser.OpenSubKey(LegacyPolicySubKey, writable: true);
+            key?.DeleteValue(LegacyPolicyValueName, throwOnMissingValue: false);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+            DesktopDiagnosticLogger.Log(
+                "legacy_notification_policy_clear_failed",
+                new Dictionary<string, string?>
+                {
+                    ["policyValue"] = LegacyPolicyValueName,
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
+        }
+    }
+
+    private static void RefreshWindowsPushNotificationService()
+    {
+        const string command =
+            "$svc = Get-Service -Name 'WpnUserService*' | " +
+            "Where-Object { $_.Status -eq 'Running' } | " +
+            "Select-Object -First 1; " +
+            "if ($null -eq $svc) { " +
+            "Write-Error 'Running WpnUserService was not found.'; exit 1 " +
+            "}; " +
+            "Restart-Service -Name $svc.Name -Force";
+
+        RunPowerShell(command);
     }
 
     private static string RunPowerShell(string command)
     {
-        using System.Diagnostics.Process process = new();
-        process.StartInfo = new System.Diagnostics.ProcessStartInfo
+        using Process process = new();
+        process.StartInfo = new ProcessStartInfo
         {
             FileName = "powershell.exe",
             UseShellExecute = false,
@@ -65,8 +119,12 @@ public sealed class LocalFocusModeController
 
         if (process.ExitCode != 0)
         {
+            string errorMessage = string.IsNullOrWhiteSpace(error)
+                ? output.Trim()
+                : error.Trim();
+
             throw new InvalidOperationException(
-                $"Windows notification setting could not be changed: {error.Trim()}");
+                $"Windows notification setting could not be changed: {errorMessage}");
         }
 
         return output;
