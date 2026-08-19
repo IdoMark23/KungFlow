@@ -1,12 +1,19 @@
-const sql = require("mssql");
+const defaultSql = require("mssql");
 
 function createSqlServerStore({
   connectionString = process.env.SQLSERVER_CONNECTION_STRING
 } = {}) {
-  const connectionConfig = connectionString || {
-    server: process.env.DB_HOST || process.env.SQLSERVER_SERVER || "127.0.0.1",
+  const useLocalDb = shouldUseLocalDb(connectionString);
+  const sql = useLocalDb ? requireWindowsSql() : defaultSql;
+  const server = process.env.DB_HOST || process.env.SQLSERVER_SERVER || (useLocalDb ? "(localdb)\\MSSQLLocalDB" : "127.0.0.1");
+  const database = process.env.DB_NAME || process.env.SQLSERVER_DATABASE || "KungFlowDB";
+  const driver = process.env.SQLSERVER_DRIVER || "ODBC Driver 17 for SQL Server";
+  const connectionConfig = useLocalDb
+    ? toLocalDbConnectionConfig(connectionString, server, database, driver)
+    : connectionString || {
+    server,
     port: toPort(process.env.DB_PORT || process.env.SQLSERVER_PORT),
-    database: process.env.DB_NAME || process.env.SQLSERVER_DATABASE || "KungFlowDB",
+    database,
     user: process.env.DB_USER || process.env.SQLSERVER_USER,
     password: process.env.DB_PASSWORD || process.env.SQLSERVER_PASSWORD,
     options: {
@@ -253,6 +260,67 @@ function toBoolean(value, fallback) {
   }
 
   return String(value).toLowerCase() === "true";
+}
+
+function shouldUseLocalDb(connectionString) {
+  if (String(process.env.KUNGFLOW_DB_MODE || "").toLowerCase() === "local") {
+    return true;
+  }
+
+  if (toBoolean(process.env.SQLSERVER_USE_LOCALDB, false)) {
+    return true;
+  }
+
+  if (toBoolean(process.env.SQLSERVER_USE_WINDOWS_AUTH, false)) {
+    return true;
+  }
+
+  const normalizedConnectionString = String(connectionString || "").toLowerCase();
+  return normalizedConnectionString.includes("trusted_connection=yes") ||
+    normalizedConnectionString.includes("trusted connection=yes");
+}
+
+function requireWindowsSql() {
+  try {
+    return require("mssql/msnodesqlv8");
+  } catch (error) {
+    throw new Error(
+      "LocalDB mode requires the optional msnodesqlv8 package. Run npm install in the server folder before using KUNGFLOW_DB_MODE=local.",
+      { cause: error }
+    );
+  }
+}
+
+function toLocalDbConnectionConfig(connectionString, server, database, driver) {
+  if (connectionString) {
+    return {
+      connectionString,
+      beforeConnect: (config) => {
+        config.conn_str = config.conn_str.replace(/Encrypt=(yes|true);?/i, "Encrypt=no;");
+      }
+    };
+  }
+
+  return {
+    server,
+    database,
+    driver,
+    options: {
+      trustedConnection: true,
+      encrypt: false
+    },
+    pool: {
+      max: 10,
+      min: 0,
+      idleTimeoutMillis: 30000
+    },
+    beforeConnect: (config) => {
+      config.conn_str = config.conn_str.replace(
+        /^Driver=(\{)?SQL Server Native Client 11\.0(\})?;/i,
+        `Driver={${driver}};`
+      );
+    }
+  };
 }
 
 module.exports = { createSqlServerStore };

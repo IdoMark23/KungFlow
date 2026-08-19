@@ -11,6 +11,9 @@ public sealed class FirewallSettings
 {
     private readonly HashSet<string> mutedApplicationIds = new(StringComparer.OrdinalIgnoreCase);
 
+    // Null means KungFlow should follow the server recommendation automatically.
+    public bool? ManualNotificationOverride { get; set; }
+
     public bool UseDefaultDoNotDisturb { get; set; }
 
     public IReadOnlyCollection<string> MutedApplicationIds => mutedApplicationIds;

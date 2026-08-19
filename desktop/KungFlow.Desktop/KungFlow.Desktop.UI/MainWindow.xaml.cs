@@ -11,7 +11,7 @@ namespace KungFlow.Desktop.UI;
 public partial class MainWindow : Window
 {
     private readonly KungFlowApiClient apiClient = new();
-    private readonly DesktopAgentSettings agentSettings = new();
+    private readonly DesktopAgentSettings agentSettings = DesktopAgentSettingsStore.Load();
     private readonly LocalFocusModeController focusModeController = new();
     private readonly DesktopMetricsCollector metricsCollector = new();
     private readonly DispatcherTimer statusRefreshTimer = new();
@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private bool isRefreshingStatus;
     private bool isSendingMetrics;
     private bool isExitRequested;
+    private bool isLoadingSettings = true;
     private bool? manualNotificationOverride;
 
     public MainWindow()
@@ -35,6 +36,10 @@ public partial class MainWindow : Window
         metricsSendTimer.Tick += MetricsSendTimer_Tick;
         metricsPollingTimer.Interval = TimeSpan.FromMilliseconds(250);
         metricsPollingTimer.Tick += MetricsPollingTimer_Tick;
+
+        ApplySettingsToControls();
+        manualNotificationOverride = agentSettings.Firewall.ManualNotificationOverride;
+        isLoadingSettings = false;
 
         ConfigureTrayIcon();
         UpdateManualNotificationControls();
@@ -157,7 +162,7 @@ public partial class MainWindow : Window
     {
         session = null;
         metricsCollector.Stop();
-        manualNotificationOverride = null;
+        SetManualNotificationOverride(null);
         focusModeController.SetEnabled(false);
         PasswordBox.Clear();
         SetDesktopStatusMessage("");
@@ -380,7 +385,13 @@ public partial class MainWindow : Window
 
     private void DataCollectionEnabledCheckBox_Changed(object sender, RoutedEventArgs e)
     {
+        if (isLoadingSettings)
+        {
+            return;
+        }
+
         agentSettings.IsDataCollectionEnabled = DataCollectionEnabledCheckBox.IsChecked == true;
+        DesktopAgentSettingsStore.Save(agentSettings);
         DesktopDiagnosticLogger.Log(
             "desktop_activity_collection_setting_changed",
             new Dictionary<string, string?>
@@ -389,6 +400,11 @@ public partial class MainWindow : Window
                 ["hasSession"] = session is null ? "false" : "true"
             });
         ApplyDataCollectionState();
+    }
+
+    private void ApplySettingsToControls()
+    {
+        DataCollectionEnabledCheckBox.IsChecked = agentSettings.IsDataCollectionEnabled;
     }
 
     private void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
@@ -407,7 +423,7 @@ public partial class MainWindow : Window
         try
         {
             focusModeController.SetEnabled(shouldSilenceNotifications);
-            manualNotificationOverride = shouldSilenceNotifications;
+            SetManualNotificationOverride(shouldSilenceNotifications);
             UpdateManualNotificationControls();
             UpdateLocalFocusModeIndicator();
             string message = shouldSilenceNotifications
@@ -441,7 +457,7 @@ public partial class MainWindow : Window
     private async void ResumeAutomaticControlButton_Click(object sender, RoutedEventArgs e)
     {
         bool hadManualOverride = manualNotificationOverride.HasValue;
-        manualNotificationOverride = null;
+        SetManualNotificationOverride(null);
         UpdateManualNotificationControls();
 
         DesktopDiagnosticLogger.Log(
@@ -511,6 +527,13 @@ public partial class MainWindow : Window
             isFocusModeEnabled
                 ? MediaColor.FromRgb(220, 38, 38)
                 : MediaColor.FromRgb(22, 163, 74));
+    }
+
+    private void SetManualNotificationOverride(bool? value)
+    {
+        manualNotificationOverride = value;
+        agentSettings.Firewall.ManualNotificationOverride = value;
+        DesktopAgentSettingsStore.Save(agentSettings);
     }
 
     private void ApplyDataCollectionState()
