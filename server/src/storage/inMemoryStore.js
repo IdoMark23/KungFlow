@@ -5,6 +5,8 @@ function createInMemoryStore() {
   const usersById = new Map();
   const sessionsByToken = new Map();
   const cognitiveStatesByUserId = new Map();
+  const firewallEventsByUserId = new Map();
+  let nextFirewallEventId = 1;
 
   return {
     saveUser(user) {
@@ -85,6 +87,26 @@ function createInMemoryStore() {
 
     deleteCognitiveState(userId) {
       return cognitiveStatesByUserId.delete(userId) ? 1 : 0;
+    },
+
+    saveFirewallEvent(event) {
+      const savedEvent = {
+        ...event,
+        id: nextFirewallEventId++,
+        createdAt: new Date().toISOString()
+      };
+      const existingEvents = firewallEventsByUserId.get(event.userId) || [];
+      existingEvents.push(savedEvent);
+      firewallEventsByUserId.set(event.userId, existingEvents);
+
+      return savedEvent;
+    },
+
+    getFirewallEvents(userId, limit = 50) {
+      return (firewallEventsByUserId.get(userId) || [])
+        .slice()
+        .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt))
+        .slice(0, limit);
     },
 
     statusByUserId

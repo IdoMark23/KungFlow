@@ -120,6 +120,34 @@ public sealed class KungFlowApiClient
         return metricsResponse ?? throw new InvalidOperationException("KungFlow server returned an empty metrics response.");
     }
 
+    public async Task SendFirewallEventAsync(
+        string accessToken,
+        bool notificationsSilenced,
+        string controlMode,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        using HttpRequestMessage request = new(HttpMethod.Post, "/api/firewall/events");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Content = JsonContent.Create(
+            new FirewallEventRequest(
+                DateTimeOffset.UtcNow,
+                "desktop",
+                notificationsSilenced ? "activated" : "deactivated",
+                controlMode,
+                reason),
+            options: JsonOptions);
+
+        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+        string body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ApiError? apiError = Deserialize<ApiError>(body);
+            throw new InvalidOperationException(apiError?.Error ?? "KungFlow server request failed.");
+        }
+    }
+
     public async Task LogoutAsync(string accessToken, CancellationToken cancellationToken)
     {
         using HttpRequestMessage request = new(HttpMethod.Post, "/api/auth/logout");
@@ -162,6 +190,13 @@ internal sealed record MetricsPayload(
     [property: JsonPropertyName("keyPressCount")] int KeyPressCount,
     [property: JsonPropertyName("typingSpeed")] double TypingSpeed,
     [property: JsonPropertyName("mouseSpeed")] double MouseSpeed);
+
+internal sealed record FirewallEventRequest(
+    [property: JsonPropertyName("occurredAt")] DateTimeOffset OccurredAt,
+    [property: JsonPropertyName("platform")] string Platform,
+    [property: JsonPropertyName("eventType")] string EventType,
+    [property: JsonPropertyName("controlMode")] string ControlMode,
+    [property: JsonPropertyName("reason")] string Reason);
 
 public sealed record LoginResponse(
     [property: JsonPropertyName("accessToken")] string AccessToken,

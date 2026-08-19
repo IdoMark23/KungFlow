@@ -93,6 +93,30 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID(N'dbo.FirewallEvents', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.FirewallEvents (
+        Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        UserId NVARCHAR(64) NOT NULL,
+        Platform NVARCHAR(50) NOT NULL
+            CONSTRAINT CK_FirewallEvents_Platform
+            CHECK (Platform IN ('extension', 'desktop', 'web', 'mobile')),
+        EventType NVARCHAR(50) NOT NULL
+            CONSTRAINT CK_FirewallEvents_EventType
+            CHECK (EventType IN ('activated', 'deactivated')),
+        ControlMode NVARCHAR(50) NOT NULL
+            CONSTRAINT CK_FirewallEvents_ControlMode
+            CHECK (ControlMode IN ('automatic', 'manual')),
+        Reason NVARCHAR(255) NULL,
+        NotificationsSilenced BIT NOT NULL,
+        OccurredAt DATETIME2 NOT NULL,
+        CreatedAt DATETIME2 NOT NULL
+            CONSTRAINT DF_FirewallEvents_CreatedAt
+            DEFAULT SYSUTCDATETIME()
+    );
+END;
+GO
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.foreign_keys
@@ -277,6 +301,18 @@ GO
 IF NOT EXISTS (
     SELECT 1
     FROM sys.foreign_keys
+    WHERE name = N'FK_FirewallEvents_Users'
+)
+BEGIN
+    ALTER TABLE dbo.FirewallEvents
+    ADD CONSTRAINT FK_FirewallEvents_Users
+        FOREIGN KEY (UserId) REFERENCES dbo.Users(Id);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
     WHERE name = N'FK_UserCognitiveStates_Users'
 )
 BEGIN
@@ -373,5 +409,50 @@ BEGIN
     WHERE UserId = @UserId;
 
     SELECT @@ROWCOUNT AS DeletedCount;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.CreateFirewallEvent
+    @UserId NVARCHAR(64),
+    @Platform NVARCHAR(50),
+    @EventType NVARCHAR(50),
+    @ControlMode NVARCHAR(50),
+    @Reason NVARCHAR(255) = NULL,
+    @NotificationsSilenced BIT,
+    @OccurredAt DATETIME2
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO dbo.FirewallEvents (
+        UserId, Platform, EventType, ControlMode, Reason,
+        NotificationsSilenced, OccurredAt
+    )
+    VALUES (
+        @UserId, @Platform, @EventType, @ControlMode, @Reason,
+        @NotificationsSilenced, @OccurredAt
+    );
+
+    SELECT
+        Id, UserId, Platform, EventType, ControlMode, Reason,
+        NotificationsSilenced, OccurredAt, CreatedAt
+    FROM dbo.FirewallEvents
+    WHERE Id = SCOPE_IDENTITY();
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.GetFirewallEventsByUserId
+    @UserId NVARCHAR(64),
+    @Limit INT = 50
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP (@Limit)
+        Id, UserId, Platform, EventType, ControlMode, Reason,
+        NotificationsSilenced, OccurredAt, CreatedAt
+    FROM dbo.FirewallEvents
+    WHERE UserId = @UserId
+    ORDER BY OccurredAt DESC, Id DESC;
 END;
 GO

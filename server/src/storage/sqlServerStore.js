@@ -170,6 +170,29 @@ function createSqlServerStore({
         .execute("dbo.DeleteUserCognitiveState");
 
       return Number(result.recordset[0]?.DeletedCount || 0);
+    },
+
+    async saveFirewallEvent(event) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), event.userId)
+        .input("Platform", sql.NVarChar(50), event.platform)
+        .input("EventType", sql.NVarChar(50), event.eventType)
+        .input("ControlMode", sql.NVarChar(50), event.controlMode)
+        .input("Reason", sql.NVarChar(255), event.reason || null)
+        .input("NotificationsSilenced", sql.Bit, Boolean(event.notificationsSilenced))
+        .input("OccurredAt", sql.DateTime2, new Date(event.occurredAt))
+        .execute("dbo.CreateFirewallEvent");
+
+      return toFirewallEvent(result.recordset[0]);
+    },
+
+    async getFirewallEvents(userId, limit = 50) {
+      const result = await (await request())
+        .input("UserId", sql.NVarChar(64), userId)
+        .input("Limit", sql.Int, limit)
+        .execute("dbo.GetFirewallEventsByUserId");
+
+      return result.recordset.map(toFirewallEvent);
     }
   };
 }
@@ -232,6 +255,22 @@ function toCognitiveState(row) {
     comparisonBaselineScore: row.ComparisonBaselineScore,
     shouldSilenceNotifications: Boolean(row.ShouldSilenceNotifications),
     updatedAt: toIsoString(row.UpdatedAt)
+  };
+}
+
+function toFirewallEvent(row) {
+  if (!row) return null;
+
+  return {
+    id: row.Id,
+    userId: row.UserId,
+    platform: row.Platform,
+    eventType: row.EventType,
+    controlMode: row.ControlMode,
+    reason: row.Reason,
+    notificationsSilenced: Boolean(row.NotificationsSilenced),
+    occurredAt: toIsoString(row.OccurredAt),
+    createdAt: toIsoString(row.CreatedAt)
   };
 }
 

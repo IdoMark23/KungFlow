@@ -279,6 +279,77 @@ function createApp({ store = createInMemoryStore() } = {}) {
     });
   }));
 
+  app.post("/api/firewall/events", requireAuth, asyncHandler(async (req, res) => {
+    const event = req.body || {};
+    const eventType = normalizeAllowedValue(event.eventType, ["activated", "deactivated"]);
+    const controlMode = normalizeAllowedValue(event.controlMode, ["automatic", "manual"]);
+    const platform = normalizeAllowedValue(
+      event.platform || req.session.platform || "desktop",
+      ["extension", "desktop", "web", "mobile"]
+    );
+
+    if (!eventType) {
+      return res.status(400).json({
+        error: "eventType must be activated or deactivated."
+      });
+    }
+
+    if (!controlMode) {
+      return res.status(400).json({
+        error: "controlMode must be automatic or manual."
+      });
+    }
+
+    if (!platform) {
+      return res.status(400).json({
+        error: "platform must be extension, desktop, web or mobile."
+      });
+    }
+
+    const occurredAt = toValidDate(event.occurredAt || new Date().toISOString());
+
+    if (!occurredAt) {
+      return res.status(400).json({
+        error: "occurredAt must be a valid date."
+      });
+    }
+
+    const reason = typeof event.reason === "string"
+      ? event.reason.trim().slice(0, 255)
+      : null;
+
+    const savedEvent = await app.locals.store.saveFirewallEvent({
+      userId: req.user.id,
+      platform,
+      eventType,
+      controlMode,
+      reason: reason || null,
+      notificationsSilenced: eventType === "activated",
+      occurredAt: occurredAt.toISOString()
+    });
+
+    logInfo("firewall_event_recorded", {
+      userId: req.user.id,
+      platform: savedEvent.platform,
+      eventType: savedEvent.eventType,
+      controlMode: savedEvent.controlMode,
+      reason: savedEvent.reason
+    });
+
+    res.status(201).json({
+      event: savedEvent
+    });
+  }));
+
+  app.get("/api/firewall/events", requireAuth, asyncHandler(async (req, res) => {
+    const limit = toBoundedLimit(req.query.limit, 50, 100);
+    const events = await app.locals.store.getFirewallEvents(req.user.id, limit);
+
+    res.json({
+      events
+    });
+  }));
+
   app.post("/api/demo/baseline", requireAuth, asyncHandler(async (req, res) => {
     if (!isDemoModeEnabled) {
       return res.status(404).json({
@@ -451,6 +522,27 @@ function createDemoMetrics(overrides = {}) {
     mouseSpeed: 90,
     ...overrides
   };
+}
+
+function normalizeAllowedValue(value, allowedValues) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  return allowedValues.includes(normalizedValue) ? normalizedValue : null;
+}
+
+function toValidDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toBoundedLimit(value, fallback, max) {
+  const limit = Number(value || fallback);
+  return Number.isInteger(limit) && limit > 0
+    ? Math.min(limit, max)
+    : fallback;
 }
 
 function asyncHandler(handler) {

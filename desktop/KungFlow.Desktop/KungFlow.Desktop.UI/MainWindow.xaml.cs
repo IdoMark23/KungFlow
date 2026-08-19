@@ -274,7 +274,7 @@ public partial class MainWindow : Window
                 session.AccessToken,
                 CancellationToken.None);
 
-            ApplyAutomaticNotificationState(status.ShouldSilenceNotifications);
+            await ApplyAutomaticNotificationStateAsync(status.ShouldSilenceNotifications);
             UpdateStatusView(status);
             SetDesktopStatusMessage("Status synced with KungFlow server.");
         }
@@ -315,7 +315,7 @@ public partial class MainWindow : Window
 
             if (response.Status is not null)
             {
-                ApplyAutomaticNotificationState(response.Status.ShouldSilenceNotifications);
+                await ApplyAutomaticNotificationStateAsync(response.Status.ShouldSilenceNotifications);
                 UpdateStatusView(response.Status);
             }
 
@@ -407,7 +407,7 @@ public partial class MainWindow : Window
         DataCollectionEnabledCheckBox.IsChecked = agentSettings.IsDataCollectionEnabled;
     }
 
-    private void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
+    private async void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
     {
         bool previousState = focusModeController.IsEnabled();
         bool shouldSilenceNotifications = !focusModeController.IsEnabled();
@@ -426,6 +426,13 @@ public partial class MainWindow : Window
             SetManualNotificationOverride(shouldSilenceNotifications);
             UpdateManualNotificationControls();
             UpdateLocalFocusModeIndicator();
+            bool currentState = focusModeController.IsEnabled();
+
+            if (previousState != currentState)
+            {
+                await RecordFirewallEventAsync(currentState, "manual", "manual_toggle");
+            }
+
             string message = shouldSilenceNotifications
                 ? "KungFlow Firewall activated manually. Windows notifications are off."
                 : "KungFlow Firewall deactivated manually. Windows notifications are on.";
@@ -435,7 +442,7 @@ public partial class MainWindow : Window
                 new Dictionary<string, string?>
                 {
                     ["previousState"] = previousState ? "off" : "on",
-                    ["newState"] = focusModeController.IsEnabled() ? "off" : "on",
+                    ["newState"] = currentState ? "off" : "on",
                     ["message"] = message
                 });
         }
@@ -472,7 +479,7 @@ public partial class MainWindow : Window
         await RefreshStatusAsync();
     }
 
-    private void ApplyAutomaticNotificationState(bool shouldSilenceNotifications)
+    private async Task ApplyAutomaticNotificationStateAsync(bool shouldSilenceNotifications)
     {
         bool previousState = focusModeController.IsEnabled();
         bool requestedState = manualNotificationOverride ?? shouldSilenceNotifications;
@@ -483,6 +490,13 @@ public partial class MainWindow : Window
 
         if (previousState != currentState)
         {
+            string controlMode = manualNotificationOverride.HasValue ? "manual" : "automatic";
+            string reason = manualNotificationOverride.HasValue
+                ? "manual_override_applied"
+                : "server_recommendation";
+
+            await RecordFirewallEventAsync(currentState, controlMode, reason);
+
             DesktopDiagnosticLogger.Log(
                 "automatic_notification_state_applied",
                 new Dictionary<string, string?>
@@ -534,6 +548,49 @@ public partial class MainWindow : Window
         manualNotificationOverride = value;
         agentSettings.Firewall.ManualNotificationOverride = value;
         DesktopAgentSettingsStore.Save(agentSettings);
+    }
+
+    private async Task RecordFirewallEventAsync(
+        bool notificationsSilenced,
+        string controlMode,
+        string reason)
+    {
+        if (session is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await apiClient.SendFirewallEventAsync(
+                session.AccessToken,
+                notificationsSilenced,
+                controlMode,
+                reason,
+                CancellationToken.None);
+
+            DesktopDiagnosticLogger.Log(
+                "firewall_event_sent",
+                new Dictionary<string, string?>
+                {
+                    ["notificationsState"] = notificationsSilenced ? "off" : "on",
+                    ["controlMode"] = controlMode,
+                    ["reason"] = reason
+                });
+        }
+        catch (Exception ex)
+        {
+            DesktopDiagnosticLogger.Log(
+                "firewall_event_send_failed",
+                new Dictionary<string, string?>
+                {
+                    ["notificationsState"] = notificationsSilenced ? "off" : "on",
+                    ["controlMode"] = controlMode,
+                    ["reason"] = reason,
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
+        }
     }
 
     private void ApplyDataCollectionState()
