@@ -364,6 +364,7 @@ public partial class MainWindow : Window
             isFocusModeEnabled
                 ? MediaColor.FromRgb(220, 38, 38)
                 : MediaColor.FromRgb(22, 163, 74));
+        UpdateFirewallStatusSummary();
 
         LastStatusUpdateTextBlock.Text = DateTime.Now.ToString("HH:mm:ss");
     }
@@ -378,6 +379,7 @@ public partial class MainWindow : Window
         NotificationRecommendationTextBlock.Foreground = new SolidColorBrush(Colors.White);
         LocalFocusModeTextBlock.Text = "Inactive";
         LocalFocusModeTextBlock.Foreground = new SolidColorBrush(Colors.White);
+        ResetFirewallStatusSummary();
         LastStatusUpdateTextBlock.Text = "Never";
         StatusOrbEllipse.Fill = new SolidColorBrush(MediaColor.FromRgb(148, 163, 184));
         StatusOrbEllipse.Stroke = new SolidColorBrush(MediaColor.FromRgb(226, 232, 240));
@@ -536,6 +538,42 @@ public partial class MainWindow : Window
             notificationsAreSilenced
                 ? MediaColor.FromRgb(248, 113, 113)
                 : MediaColor.FromRgb(74, 222, 128));
+        UpdateFirewallStatusSummary();
+    }
+
+    private void ResetFirewallStatusSummary()
+    {
+        FirewallStatusSummaryBorder.BorderBrush = new SolidColorBrush(MediaColor.FromRgb(51, 65, 85));
+        FirewallStatusSummaryTextBlock.Text = "Firewall inactive - notifications can pass through";
+        FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(Colors.White);
+        FirewallStatusDetailTextBlock.Text = "Automatic protection";
+        FirewallStatusSourceTextBlock.Text = "Automatic";
+        FirewallStatusSourceTextBlock.Foreground = new SolidColorBrush(MediaColor.FromRgb(203, 213, 225));
+        FirewallStatusSourceBadgeBorder.BorderBrush = new SolidColorBrush(MediaColor.FromRgb(71, 85, 105));
+    }
+
+    private void UpdateFirewallStatusSummary()
+    {
+        bool isFirewallActive = focusModeController.IsEnabled();
+        bool isManualOverride = manualNotificationOverride.HasValue;
+        MediaColor statusColor = isFirewallActive
+            ? MediaColor.FromRgb(248, 113, 113)
+            : MediaColor.FromRgb(74, 222, 128);
+        MediaColor borderColor = isFirewallActive
+            ? MediaColor.FromRgb(127, 29, 29)
+            : MediaColor.FromRgb(22, 101, 52);
+
+        FirewallStatusSummaryBorder.BorderBrush = new SolidColorBrush(borderColor);
+        FirewallStatusSummaryTextBlock.Text = isFirewallActive
+            ? "Firewall active - notifications are blocked"
+            : "Firewall inactive - notifications can pass through";
+        FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(statusColor);
+        FirewallStatusDetailTextBlock.Text = isManualOverride
+            ? "Manual override is controlling notification protection."
+            : "Automatic protection follows KungFlow's overload detection.";
+        FirewallStatusSourceTextBlock.Text = isManualOverride ? "Manual" : "Automatic";
+        FirewallStatusSourceTextBlock.Foreground = new SolidColorBrush(statusColor);
+        FirewallStatusSourceBadgeBorder.BorderBrush = new SolidColorBrush(borderColor);
     }
 
     private void UpdateLocalFocusModeIndicator()
@@ -546,6 +584,7 @@ public partial class MainWindow : Window
             isFocusModeEnabled
                 ? MediaColor.FromRgb(220, 38, 38)
                 : MediaColor.FromRgb(22, 163, 74));
+        UpdateFirewallStatusSummary();
     }
 
     private void SetManualNotificationOverride(bool? value)

@@ -464,6 +464,54 @@
                 </Border>
               </UniformGrid>
 
+              <Border x:Name="FirewallStatusSummaryBorder"
+                      Background="#1B2638"
+                      BorderBrush="#334155"
+                      BorderThickness="1"
+                      CornerRadius="8"
+                      Padding="16"
+                      Width="560"
+                      Margin="0,16,0,0">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="Notification firewall"
+                               Foreground="#94A3B8"
+                               FontSize="12"
+                               FontWeight="Bold" />
+                    <TextBlock x:Name="FirewallStatusSummaryTextBlock"
+                               Text="Firewall inactive - notifications can pass through"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               Margin="0,8,16,0" />
+                    <TextBlock x:Name="FirewallStatusDetailTextBlock"
+                               Text="Automatic protection"
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,5,16,0" />
+                  </StackPanel>
+                  <Border x:Name="FirewallStatusSourceBadgeBorder"
+                          Grid.Column="1"
+                          Background="#29344A"
+                          BorderBrush="#475569"
+                          BorderThickness="1"
+                          CornerRadius="14"
+                          Padding="10,5"
+                          VerticalAlignment="Center">
+                    <TextBlock x:Name="FirewallStatusSourceTextBlock"
+                               Text="Automatic"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="#CBD5E1" />
+                  </Border>
+                </Grid>
+              </Border>
+
               <TextBlock x:Name="DesktopStatusMessageTextBlock"
                          MinHeight="20"
                          FontSize="12"
