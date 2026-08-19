@@ -83,9 +83,46 @@ public partial class MainWindow : Window
         string username = RegisterUsernameTextBox.Text.Trim();
         string password = RegisterPasswordBox.Password;
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        List<string> registrationErrors = [];
+
+        if (string.IsNullOrWhiteSpace(email))
         {
-            SetRegisterMessage("Email, username and password are required.", true);
+            registrationErrors.Add("Email cannot be empty.");
+        }
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            registrationErrors.Add("Enter a valid email address.");
+        }
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            registrationErrors.Add("Username cannot be empty.");
+        }
+        else
+        {
+            if (username.Length < 6)
+            {
+                registrationErrors.Add("Username must contain at least 6 characters.");
+            }
+
+            if (username.Any(character => character is < ' ' or > '~'))
+            {
+                registrationErrors.Add("Username may contain printable ASCII characters only.");
+            }
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            registrationErrors.Add("Password cannot be empty.");
+        }
+        else
+        {
+            registrationErrors.AddRange(ValidatePassword(password));
+        }
+
+        if (registrationErrors.Count > 0)
+        {
+            SetRegisterMessage(string.Join("  •  ", registrationErrors), true);
             return;
         }
 
@@ -130,8 +167,56 @@ public partial class MainWindow : Window
         LoginView.Visibility = Visibility.Visible;
     }
 
-    private async void LogoutButton_Click(object sender, RoutedEventArgs e)
+    private void LogoutButton_Click(object sender, RoutedEventArgs e)
     {
+        LogoutConfirmationOverlay.Visibility = Visibility.Visible;
+    }
+
+    private static List<string> ValidatePassword(string password)
+    {
+        List<string> errors = [];
+
+        if (password.Length < 6)
+        {
+            errors.Add("Password must contain at least 6 characters.");
+        }
+
+        if (!password.Any(character => character is >= 'A' and <= 'Z'))
+        {
+            errors.Add("Password must contain at least one uppercase letter.");
+        }
+
+        if (!password.Any(character => character is >= 'a' and <= 'z'))
+        {
+            errors.Add("Password must contain at least one lowercase letter.");
+        }
+
+        if (!password.Any(character => character is >= '0' and <= '9'))
+        {
+            errors.Add("Password must contain at least one number.");
+        }
+
+        if (!password.Any(character => character is >= '!' and <= '~' && !char.IsLetterOrDigit(character)))
+        {
+            errors.Add("Password must contain at least one special character.");
+        }
+
+        if (password.Any(character => character is < ' ' or > '~'))
+        {
+            errors.Add("Password may contain printable ASCII characters only.");
+        }
+
+        return errors;
+    }
+
+    private void CancelLogoutButton_Click(object sender, RoutedEventArgs e)
+    {
+        LogoutConfirmationOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private async void ConfirmLogoutButton_Click(object sender, RoutedEventArgs e)
+    {
+        LogoutConfirmationOverlay.Visibility = Visibility.Collapsed;
         statusRefreshTimer.Stop();
         metricsSendTimer.Stop();
         metricsPollingTimer.Stop();
@@ -156,7 +241,7 @@ public partial class MainWindow : Window
         {
             LogoutButton.IsEnabled = true;
             ClearLocalSession();
-            SetMessage(logoutMessage, logoutMessageIsError);
+            SetMessage(logoutMessageIsError ? logoutMessage : "", logoutMessageIsError);
         }
     }
 

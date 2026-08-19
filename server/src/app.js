@@ -60,15 +60,36 @@ function createApp({ store = createInMemoryStore() } = {}) {
   app.post("/api/auth/register", asyncHandler(async (req, res) => {
     const { email, username, password } = req.body || {};
 
-    if (!email || typeof email !== "string") {
-      return res.status(400).json({
-        error: "email is required."
-      });
+    const registrationErrors = [];
+
+    if (typeof email !== "string" || email.trim().length === 0) {
+      registrationErrors.push("Email cannot be empty.");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      registrationErrors.push("Enter a valid email address.");
     }
 
-    if (!password || typeof password !== "string" || password.length < 8) {
+    if (typeof username !== "string" || username.trim().length === 0) {
+      registrationErrors.push("Username cannot be empty.");
+    } else {
+      if (username.trim().length < 6) {
+        registrationErrors.push("Username must contain at least 6 characters.");
+      }
+
+      if (!/^[\x20-\x7E]+$/.test(username)) {
+        registrationErrors.push("Username may contain printable ASCII characters only.");
+      }
+    }
+
+    if (typeof password !== "string" || password.length === 0) {
+      registrationErrors.push("Password cannot be empty.");
+    } else {
+      registrationErrors.push(...validatePassword(password));
+    }
+
+    if (registrationErrors.length > 0) {
       return res.status(400).json({
-        error: "password must be at least 8 characters."
+        error: registrationErrors.join(" • "),
+        errors: registrationErrors
       });
     }
 
@@ -432,7 +453,17 @@ function createApp({ store = createInMemoryStore() } = {}) {
     });
   }));
 
-  app.use(express.static(path.join(__dirname, "..", "public", "landing")));
+  const landingPagePath = path.join(__dirname, "..", "public", "landing");
+
+  app.use((req, res, next) => {
+    if (req.path === "/KungFlowLandingPage") {
+      return res.redirect(301, "/KungFlowLandingPage/");
+    }
+
+    next();
+  });
+  app.use("/KungFlowLandingPage", express.static(landingPagePath));
+  app.use(express.static(landingPagePath));
 
   app.use((error, req, res, next) => {
     logWarn("http_request_failed", {
@@ -534,6 +565,43 @@ function normalizeAllowedValue(value, allowedValues) {
 
   const normalizedValue = value.trim().toLowerCase();
   return allowedValues.includes(normalizedValue) ? normalizedValue : null;
+}
+
+function validatePassword(password) {
+  const errors = [];
+
+  if (password.length < 6) {
+    errors.push("Password must contain at least 6 characters.");
+  }
+
+  if (password.length > 20) {
+    errors.push("Password must contain no more than 20 characters.");
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Password must contain at least one uppercase letter.");
+  }
+
+  if (!/[a-z]/.test(password)) {
+    errors.push("Password must contain at least one lowercase letter.");
+  }
+
+  if (!/[0-9]/.test(password)) {
+    errors.push("Password must contain at least one number.");
+  }
+
+  if (![...password].some(character => {
+    const code = character.charCodeAt(0);
+    return code >= 33 && code <= 126 && !/[A-Za-z0-9]/.test(character);
+  })) {
+    errors.push("Password must contain at least one special character.");
+  }
+
+  if (!/^[\x20-\x7E]*$/.test(password)) {
+    errors.push("Password may contain printable ASCII characters only.");
+  }
+
+  return errors;
 }
 
 function toValidDate(value) {
