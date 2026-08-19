@@ -4,6 +4,34 @@ PRD file - [PRD](docs/product/PRD.docx).
 Presentation - [KungFlow.pdf](docs/presentation/KungFlow.pdf).
 Internal experiment - [Kungflow_experiment](docs/research/Kungflow_experiment.docx).
 
+## Local Development Startup
+
+For Windows local development with SQL Server LocalDB:
+
+```powershell
+.\scripts\setup-local-db.ps1
+```
+
+Start the local server:
+
+```powershell
+.\scripts\start-local-server.ps1
+```
+
+Start the desktop app:
+
+```powershell
+.\scripts\start-desktop-ui.ps1
+```
+
+If PowerShell blocks script execution, run the same script through:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local-server.ps1
+```
+
+Local mode is explicit. The local server script sets `KUNGFLOW_DB_MODE=local`, `SQLSERVER_SERVER=(localdb)\MSSQLLocalDB`, and `SQLSERVER_DRIVER=ODBC Driver 17 for SQL Server`. Cloud/deployment runs should not set `KUNGFLOW_DB_MODE=local`.
+
 RESEARCH SOURCES WE BASED OUR WORK ON:
 Problem Validation:
 
