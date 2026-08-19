@@ -562,6 +562,84 @@
               </Border>
             </UniformGrid>
 
+            <Border Background="#243044"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="18"
+                    Margin="0,10,0,0">
+              <StackPanel>
+                <Grid Margin="0,0,0,16">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="Firewall history"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White" />
+                    <TextBlock Text="A short history of when KungFlow protected your focus."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,0" />
+                  </StackPanel>
+                  <Button x:Name="RefreshFirewallHistoryButton"
+                          Grid.Column="1"
+                          Content="Refresh"
+                          Style="{StaticResource SecondaryButton}"
+                          Width="110"
+                          Margin="16,0,0,0"
+                          Click="RefreshFirewallHistoryButton_Click" />
+                </Grid>
+
+                <UniformGrid Columns="3" Margin="0,0,0,14">
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Activations today" Foreground="#94A3B8" />
+                      <TextBlock x:Name="FirewallActivationsTodayTextBlock"
+                                 Text="0"
+                                 FontSize="28"
+                                 FontWeight="Bold"
+                                 Foreground="White"
+                                 Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Latest action" Foreground="#94A3B8" />
+                      <TextBlock x:Name="FirewallLatestActionTextBlock"
+                                 Text="No events yet"
+                                 FontSize="16"
+                                 FontWeight="Bold"
+                                 Foreground="White"
+                                 TextWrapping="Wrap"
+                                 Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Current source" Foreground="#94A3B8" />
+                      <TextBlock x:Name="FirewallLatestControlModeTextBlock"
+                                 Text="-"
+                                 FontSize="16"
+                                 FontWeight="Bold"
+                                 Foreground="White"
+                                 TextWrapping="Wrap"
+                                 Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+
+                <TextBlock Text="Recent firewall events"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="0,0,0,8" />
+                <StackPanel x:Name="RecentFirewallEventsPanel" />
+              </StackPanel>
+            </Border>
+
           </StackPanel>
         </ScrollViewer>
 

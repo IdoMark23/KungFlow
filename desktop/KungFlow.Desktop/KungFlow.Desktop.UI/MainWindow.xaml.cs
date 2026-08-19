@@ -1,5 +1,6 @@
 using KungFlow.Desktop.Agent;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Runtime.InteropServices;
@@ -21,6 +22,7 @@ public partial class MainWindow : Window
     private readonly TimeSpan metricsCollectionWindow = TimeSpan.FromMinutes(1);
     private DesktopSession? session;
     private bool isRefreshingStatus;
+    private bool isRefreshingFirewallHistory;
     private bool isSendingMetrics;
     private bool isExitRequested;
     private bool isLoadingSettings = true;
@@ -186,9 +188,10 @@ public partial class MainWindow : Window
         ShowDashboardPage(DashboardPage.Status);
     }
 
-    private void StatisticsNavButton_Click(object sender, RoutedEventArgs e)
+    private async void StatisticsNavButton_Click(object sender, RoutedEventArgs e)
     {
         ShowDashboardPage(DashboardPage.Statistics);
+        await RefreshFirewallHistoryAsync();
     }
 
     private void SettingsNavButton_Click(object sender, RoutedEventArgs e)
@@ -230,6 +233,7 @@ public partial class MainWindow : Window
         ShowLoggedInView(response.User.Email);
         ApplyDataCollectionState();
         await RefreshStatusAsync();
+        await RefreshFirewallHistoryAsync();
         statusRefreshTimer.Start();
     }
 
@@ -381,6 +385,7 @@ public partial class MainWindow : Window
         StatusBadgeTextBlock.Foreground = new SolidColorBrush(MediaColor.FromRgb(51, 65, 85));
         StatusHeadlineTextBlock.Text = "KungFlow is waiting for activity data.";
         StatusBodyTextBlock.Text = "After the desktop agent collects enough computer activity, the firewall will decide whether interruptions should pass through.";
+        ResetFirewallHistoryView();
     }
 
     private void DataCollectionEnabledCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -577,6 +582,8 @@ public partial class MainWindow : Window
                     ["controlMode"] = controlMode,
                     ["reason"] = reason
                 });
+
+            await RefreshFirewallHistoryAsync();
         }
         catch (Exception ex)
         {
@@ -591,6 +598,166 @@ public partial class MainWindow : Window
                     ["message"] = ex.Message
                 });
         }
+    }
+
+    private async void RefreshFirewallHistoryButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshFirewallHistoryAsync();
+    }
+
+    private async Task RefreshFirewallHistoryAsync()
+    {
+        if (session is null || isRefreshingFirewallHistory)
+        {
+            return;
+        }
+
+        isRefreshingFirewallHistory = true;
+        RefreshFirewallHistoryButton.IsEnabled = false;
+
+        try
+        {
+            FirewallEventsResponse response = await apiClient.GetFirewallEventsAsync(
+                session.AccessToken,
+                100,
+                CancellationToken.None);
+
+            UpdateFirewallHistoryView(response.Events);
+        }
+        catch (Exception ex)
+        {
+            FirewallLatestActionTextBlock.Text = "History unavailable";
+            FirewallLatestControlModeTextBlock.Text = "Server sync failed";
+            DesktopDiagnosticLogger.Log(
+                "firewall_history_refresh_failed",
+                new Dictionary<string, string?>
+                {
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
+        }
+        finally
+        {
+            isRefreshingFirewallHistory = false;
+            RefreshFirewallHistoryButton.IsEnabled = true;
+        }
+    }
+
+    private void UpdateFirewallHistoryView(IReadOnlyList<FirewallEventResponse> events)
+    {
+        DateTime today = DateTime.Now.Date;
+        int activationsToday = events.Count(firewallEvent =>
+            firewallEvent.EventType == "activated" &&
+            firewallEvent.OccurredAt.ToLocalTime().Date == today);
+
+        FirewallActivationsTodayTextBlock.Text = activationsToday.ToString();
+
+        FirewallEventResponse? latestEvent = events.FirstOrDefault();
+
+        if (latestEvent is null)
+        {
+            ResetFirewallHistoryView();
+            return;
+        }
+
+        FirewallLatestActionTextBlock.Text = FormatFirewallEventAction(latestEvent);
+        FirewallLatestControlModeTextBlock.Text = FormatControlMode(latestEvent.ControlMode);
+
+        RecentFirewallEventsPanel.Children.Clear();
+
+        foreach (FirewallEventResponse firewallEvent in events.Take(5))
+        {
+            RecentFirewallEventsPanel.Children.Add(CreateFirewallEventRow(firewallEvent));
+        }
+    }
+
+    private void ResetFirewallHistoryView()
+    {
+        FirewallActivationsTodayTextBlock.Text = "0";
+        FirewallLatestActionTextBlock.Text = "No events yet";
+        FirewallLatestControlModeTextBlock.Text = "-";
+        RecentFirewallEventsPanel.Children.Clear();
+        RecentFirewallEventsPanel.Children.Add(new TextBlock
+        {
+            Text = "No firewall events recorded yet.",
+            Foreground = new SolidColorBrush(MediaColor.FromRgb(148, 163, 184)),
+            TextWrapping = TextWrapping.Wrap
+        });
+    }
+
+    private static Border CreateFirewallEventRow(FirewallEventResponse firewallEvent)
+    {
+        bool isActivated = firewallEvent.EventType == "activated";
+        MediaColor actionColor = isActivated
+            ? MediaColor.FromRgb(248, 113, 113)
+            : MediaColor.FromRgb(74, 222, 128);
+
+        Grid grid = new();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        StackPanel detailsPanel = new();
+        detailsPanel.Children.Add(new TextBlock
+        {
+            Text = isActivated ? "Firewall activated" : "Firewall deactivated",
+            Foreground = new SolidColorBrush(actionColor),
+            FontWeight = FontWeights.Bold,
+            FontSize = 14
+        });
+        detailsPanel.Children.Add(new TextBlock
+        {
+            Text = $"{FormatControlMode(firewallEvent.ControlMode)} - {FormatReason(firewallEvent.Reason)}",
+            Foreground = new SolidColorBrush(MediaColor.FromRgb(175, 192, 212)),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 3, 14, 0)
+        });
+
+        TextBlock timeTextBlock = new()
+        {
+            Text = firewallEvent.OccurredAt.ToLocalTime().ToString("HH:mm"),
+            Foreground = new SolidColorBrush(MediaColor.FromRgb(148, 163, 184)),
+            FontWeight = FontWeights.Bold,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        Grid.SetColumn(detailsPanel, 0);
+        Grid.SetColumn(timeTextBlock, 1);
+        grid.Children.Add(detailsPanel);
+        grid.Children.Add(timeTextBlock);
+
+        return new Border
+        {
+            Background = new SolidColorBrush(MediaColor.FromRgb(27, 38, 56)),
+            BorderBrush = new SolidColorBrush(MediaColor.FromRgb(51, 65, 85)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12),
+            Margin = new Thickness(0, 0, 0, 8),
+            Child = grid
+        };
+    }
+
+    private static string FormatFirewallEventAction(FirewallEventResponse firewallEvent)
+    {
+        string action = firewallEvent.EventType == "activated"
+            ? "Activated"
+            : "Deactivated";
+
+        return $"{action} at {firewallEvent.OccurredAt.ToLocalTime():HH:mm}";
+    }
+
+    private static string FormatControlMode(string controlMode)
+    {
+        return controlMode == "manual"
+            ? "Manual control"
+            : "Automatic control";
+    }
+
+    private static string FormatReason(string? reason)
+    {
+        return string.IsNullOrWhiteSpace(reason)
+            ? "No reason"
+            : reason.Replace("_", " ");
     }
 
     private void ApplyDataCollectionState()

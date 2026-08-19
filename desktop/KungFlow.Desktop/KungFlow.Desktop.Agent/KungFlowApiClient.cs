@@ -148,6 +148,27 @@ public sealed class KungFlowApiClient
         }
     }
 
+    public async Task<FirewallEventsResponse> GetFirewallEventsAsync(
+        string accessToken,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        using HttpRequestMessage request = new(HttpMethod.Get, $"/api/firewall/events?limit={limit}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+        string body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ApiError? apiError = Deserialize<ApiError>(body);
+            throw new InvalidOperationException(apiError?.Error ?? "KungFlow server request failed.");
+        }
+
+        FirewallEventsResponse? eventsResponse = Deserialize<FirewallEventsResponse>(body);
+        return eventsResponse ?? throw new InvalidOperationException("KungFlow server returned an empty firewall events response.");
+    }
+
     public async Task LogoutAsync(string accessToken, CancellationToken cancellationToken)
     {
         using HttpRequestMessage request = new(HttpMethod.Post, "/api/auth/logout");
@@ -223,5 +244,18 @@ public sealed record MetricsResponse(
     [property: JsonPropertyName("ignored")] bool? Ignored,
     [property: JsonPropertyName("reason")] string? Reason,
     [property: JsonPropertyName("status")] CurrentStatusResponse? Status);
+
+public sealed record FirewallEventsResponse(
+    [property: JsonPropertyName("events")] IReadOnlyList<FirewallEventResponse> Events);
+
+public sealed record FirewallEventResponse(
+    [property: JsonPropertyName("id")] int Id,
+    [property: JsonPropertyName("platform")] string Platform,
+    [property: JsonPropertyName("eventType")] string EventType,
+    [property: JsonPropertyName("controlMode")] string ControlMode,
+    [property: JsonPropertyName("reason")] string? Reason,
+    [property: JsonPropertyName("notificationsSilenced")] bool NotificationsSilenced,
+    [property: JsonPropertyName("occurredAt")] DateTimeOffset OccurredAt,
+    [property: JsonPropertyName("createdAt")] DateTimeOffset CreatedAt);
 
 internal sealed record ApiError([property: JsonPropertyName("error")] string Error);
