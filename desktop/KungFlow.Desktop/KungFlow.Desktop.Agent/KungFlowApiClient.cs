@@ -169,6 +169,29 @@ public sealed class KungFlowApiClient
         return eventsResponse ?? throw new InvalidOperationException("KungFlow server returned an empty firewall events response.");
     }
 
+    public async Task ChangePasswordAsync(
+        string accessToken,
+        string currentPassword,
+        string newPassword,
+        string confirmNewPassword,
+        CancellationToken cancellationToken)
+    {
+        using HttpRequestMessage request = new(HttpMethod.Post, "/api/auth/change-password");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Content = JsonContent.Create(
+            new ChangePasswordRequest(currentPassword, newPassword, confirmNewPassword),
+            options: JsonOptions);
+
+        using HttpResponseMessage response = await httpClient.SendAsync(request, cancellationToken);
+        string body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ApiError? apiError = Deserialize<ApiError>(body);
+            throw new InvalidOperationException(apiError?.Error ?? "KungFlow server request failed.");
+        }
+    }
+
     public async Task LogoutAsync(string accessToken, CancellationToken cancellationToken)
     {
         using HttpRequestMessage request = new(HttpMethod.Post, "/api/auth/logout");
@@ -198,6 +221,11 @@ public sealed class KungFlowApiClient
 internal sealed record LoginRequest(string Email, string Password, string Platform);
 
 internal sealed record RegisterRequest(string Email, string Username, string Password);
+
+internal sealed record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword,
+    string ConfirmNewPassword);
 
 internal sealed record MetricsRequest(
     [property: JsonPropertyName("timestamp")] DateTimeOffset Timestamp,

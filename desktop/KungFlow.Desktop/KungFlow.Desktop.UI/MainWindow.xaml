@@ -147,6 +147,40 @@
       </Style.Triggers>
     </Style>
 
+    <Style x:Key="SettingsMenuButton" TargetType="Button">
+      <Setter Property="Height" Value="48" />
+      <Setter Property="Padding" Value="14,0" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="#334155" />
+      <Setter Property="Background" Value="#1B2638" />
+      <Setter Property="Foreground" Value="#CBD5E1" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    Padding="{TemplateBinding Padding}"
+                    CornerRadius="8">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Foreground" Value="White" />
+          <Setter Property="Background" Value="#253149" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
     <Style x:Key="DarkMetricCard" TargetType="Border">
       <Setter Property="Background" Value="#243044" />
       <Setter Property="BorderBrush" Value="#334155" />
@@ -589,72 +623,108 @@
                        TextWrapping="Wrap"
                        Margin="0,0,0,28" />
 
-            <UniformGrid Columns="3">
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Open windows" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentOpenWindowsTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Window switches" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentWindowSwitchesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Key presses" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentKeyPressesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Delete/Backspace" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentDeleteKeyTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Typing speed" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentTypingSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Mouse speed" Foreground="#94A3B8" />
-                  <TextBlock x:Name="CurrentMouseSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
-                </StackPanel>
-              </Border>
-            </UniformGrid>
+            <Border Background="#1B2638"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="18"
+                    Margin="0,0,0,18">
+              <StackPanel>
+                <TextBlock Text="Current activity window"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="0,0,0,4" />
+                <TextBlock Text="Signals collected from the current desktop activity window."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,16" />
+                <UniformGrid Columns="3">
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Open windows" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentOpenWindowsTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Window switches" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentWindowSwitchesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Key presses" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentKeyPressesTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Delete/Backspace" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentDeleteKeyTextBlock" Text="0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Typing speed" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentTypingSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Mouse speed" Foreground="#94A3B8" />
+                      <TextBlock x:Name="CurrentMouseSpeedTextBlock" Text="0.0" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,16,0,0" />
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+              </StackPanel>
+            </Border>
 
-            <UniformGrid Columns="4" Margin="0,8,0,18">
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Load state" Foreground="#94A3B8" />
-                  <TextBlock x:Name="LoadStateTextBlock" Text="Waiting" FontSize="16" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" Margin="0,12,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Score" Foreground="#94A3B8" />
-                  <TextBlock x:Name="ScoreTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Baseline" Foreground="#94A3B8" />
-                  <TextBlock x:Name="BaselineTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource DarkMetricCard}">
-                <StackPanel>
-                  <TextBlock Text="Baseline progress" Foreground="#94A3B8" />
-                  <TextBlock x:Name="BaselineProgressTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
-                  <TextBlock x:Name="LastStatusUpdateTextBlock" Text="Never" Foreground="#94A3B8" Margin="0,4,0,0" />
-                </StackPanel>
-              </Border>
-            </UniformGrid>
+            <Border Background="#1B2638"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="18"
+                    Margin="0,0,0,18">
+              <StackPanel>
+                <TextBlock Text="Cognitive load model"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="0,0,0,4" />
+                <TextBlock Text="How KungFlow interprets the latest activity compared with your personal baseline."
+                           Foreground="#AFC0D4"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,16" />
+                <UniformGrid Columns="4">
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Load state" Foreground="#94A3B8" />
+                      <TextBlock x:Name="LoadStateTextBlock" Text="Waiting" FontSize="16" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Score" Foreground="#94A3B8" />
+                      <TextBlock x:Name="ScoreTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Baseline" Foreground="#94A3B8" />
+                      <TextBlock x:Name="BaselineTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Baseline progress" Foreground="#94A3B8" />
+                      <TextBlock x:Name="BaselineProgressTextBlock" Text="-" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,12,0,0" />
+                      <TextBlock x:Name="LastStatusUpdateTextBlock" Text="Never" Foreground="#94A3B8" Margin="0,4,0,0" />
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+              </StackPanel>
+            </Border>
 
             <Border Background="#243044"
                     BorderBrush="#334155"
@@ -725,7 +795,7 @@
                   </Border>
                 </UniformGrid>
 
-                <TextBlock Text="Recent firewall events"
+                <TextBlock Text="Recent firewall events (latest 10)"
                            FontSize="14"
                            FontWeight="Bold"
                            Foreground="White"
@@ -746,80 +816,189 @@
                        FontWeight="Bold"
                        Foreground="#7C8AA2"
                        Margin="0,0,0,8" />
-            <TextBlock Text="Firewall Controls"
+            <TextBlock Text="Settings"
                        FontSize="30"
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,6" />
-            <TextBlock Text="Choose when KungFlow collects desktop signals and how the notification firewall protects you when overload is detected."
+            <TextBlock Text="Manage activity collection, account security, and notification firewall behavior from one place."
                        FontSize="14"
                        Foreground="#AFC0D4"
                        TextWrapping="Wrap"
                        Margin="0,0,0,28" />
 
-            <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,18">
-              <StackPanel>
-                <CheckBox x:Name="DataCollectionEnabledCheckBox"
-                          Content="Enable desktop activity collection"
-                          IsChecked="True"
-                          Foreground="White"
-                          FontWeight="Bold"
-                          Checked="DataCollectionEnabledCheckBox_Changed"
-                          Unchecked="DataCollectionEnabledCheckBox_Changed" />
-                <TextBlock Text="When disabled, KungFlow stops collecting desktop activity until you enable it again."
-                           Foreground="#AFC0D4"
-                           TextWrapping="Wrap"
-                           Margin="22,8,0,0" />
-              </StackPanel>
-            </Border>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
 
-            <Border Background="#243044" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="18">
-              <StackPanel>
-                <TextBlock Text="Manual firewall control"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="White"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="Use this to manually activate or deactivate the KungFlow Firewall. When active, KungFlow turns off Windows notifications through the operating system."
-                           Foreground="#AFC0D4"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,14" />
-                <StackPanel Orientation="Horizontal">
-                  <Button x:Name="ToggleNotificationsButton"
-                          Content="Activate firewall"
-                          Style="{StaticResource PrimaryButton}"
-                          Width="230"
-                          HorizontalAlignment="Left"
-                          Click="ToggleNotificationsButton_Click" />
-                  <Button x:Name="ResumeAutomaticControlButton"
-                          Content="Resume automatic control"
-                          Style="{StaticResource SecondaryButton}"
-                          Width="220"
-                          Margin="12,0,0,0"
-                          HorizontalAlignment="Left"
-                          Click="ResumeAutomaticControlButton_Click" />
+              <Border Background="#172033"
+                      BorderBrush="#334155"
+                      BorderThickness="1"
+                      CornerRadius="8"
+                      Padding="10"
+                      VerticalAlignment="Top">
+                <StackPanel>
+                  <Button x:Name="ActivityCollectionSettingsButton"
+                          Content="Activity collection"
+                          Style="{StaticResource SettingsMenuButton}"
+                          Click="ActivityCollectionSettingsButton_Click" />
+                  <Button x:Name="AccountSecuritySettingsButton"
+                          Content="Account security"
+                          Style="{StaticResource SettingsMenuButton}"
+                          Click="AccountSecuritySettingsButton_Click" />
+                  <Button x:Name="FirewallControlSettingsButton"
+                          Content="Firewall control"
+                          Style="{StaticResource SettingsMenuButton}"
+                          Margin="0"
+                          Click="FirewallControlSettingsButton_Click" />
                 </StackPanel>
-                <TextBlock x:Name="ManualNotificationStatusTextBlock"
-                           Text="Firewall is inactive"
-                           Foreground="#AFC0D4"
-                           FontWeight="Bold"
-                           Margin="0,10,0,22" />
+              </Border>
 
-                <TextBlock Text="How the firewall protects focus"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="White"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="When KungFlow detects red cognitive load, the desktop app activates the firewall by changing the Windows Notifications setting at the operating-system level."
-                           Foreground="#AFC0D4"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="While active, toast popups are blocked so interruptions do not break focus. When load returns to normal, KungFlow restores Windows Notifications."
-                           Foreground="#AFC0D4"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,0" />
-              </StackPanel>
-            </Border>
+              <Grid Grid.Column="2">
+                <Border x:Name="ActivityCollectionSettingsPanel"
+                        Background="#243044"
+                        BorderBrush="#334155"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="22">
+                  <StackPanel>
+                    <TextBlock Text="Activity collection"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="Control whether KungFlow collects desktop activity signals for cognitive-load detection."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,18" />
+                    <CheckBox x:Name="DataCollectionEnabledCheckBox"
+                              Content="Enable desktop activity collection"
+                              IsChecked="True"
+                              Foreground="White"
+                              FontWeight="Bold"
+                              Checked="DataCollectionEnabledCheckBox_Changed"
+                              Unchecked="DataCollectionEnabledCheckBox_Changed" />
+                    <TextBlock Text="When disabled, KungFlow stops polling and sending desktop activity until you enable it again."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="22,8,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <Border x:Name="AccountSecuritySettingsPanel"
+                        Background="#243044"
+                        BorderBrush="#334155"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="22"
+                        Visibility="Collapsed">
+                  <StackPanel MaxWidth="520"
+                              HorizontalAlignment="Left">
+                    <TextBlock Text="Account security"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="Change your KungFlow password. Passwords must be 6-20 characters and use English letters and numbers only."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,18" />
+
+                    <TextBlock Text="Current password"
+                               Foreground="#CBD5E1"
+                               FontWeight="Bold"
+                               Margin="0,0,0,6" />
+                    <PasswordBox x:Name="CurrentPasswordBox"
+                                 Margin="0,0,0,12" />
+
+                    <TextBlock Text="New password"
+                               Foreground="#CBD5E1"
+                               FontWeight="Bold"
+                               Margin="0,0,0,6" />
+                    <PasswordBox x:Name="NewPasswordBox"
+                                 MaxLength="20"
+                                 Margin="0,0,0,12" />
+
+                    <TextBlock Text="Confirm new password"
+                               Foreground="#CBD5E1"
+                               FontWeight="Bold"
+                               Margin="0,0,0,6" />
+                    <PasswordBox x:Name="ConfirmNewPasswordBox"
+                                 MaxLength="20"
+                                 Margin="0,0,0,16" />
+
+                    <Button x:Name="ChangePasswordButton"
+                            Content="Change password"
+                            Style="{StaticResource PrimaryButton}"
+                            Width="180"
+                            HorizontalAlignment="Left"
+                            Click="ChangePasswordButton_Click" />
+                    <TextBlock x:Name="ChangePasswordMessageTextBlock"
+                               MinHeight="20"
+                               Foreground="#AFC0D4"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
+                               Margin="0,12,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <Border x:Name="FirewallControlSettingsPanel"
+                        Background="#243044"
+                        BorderBrush="#334155"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="22"
+                        Visibility="Collapsed">
+                  <StackPanel>
+                    <TextBlock Text="Firewall control"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="Use this to manually activate or deactivate the KungFlow Firewall. When active, KungFlow turns off Windows notifications through the operating system."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,16" />
+                    <StackPanel Orientation="Horizontal">
+                      <Button x:Name="ToggleNotificationsButton"
+                              Content="Activate firewall"
+                              Style="{StaticResource PrimaryButton}"
+                              Width="230"
+                              HorizontalAlignment="Left"
+                              Click="ToggleNotificationsButton_Click" />
+                      <Button x:Name="ResumeAutomaticControlButton"
+                              Content="Resume automatic control"
+                              Style="{StaticResource SecondaryButton}"
+                              Width="220"
+                              Margin="12,0,0,0"
+                              HorizontalAlignment="Left"
+                              Click="ResumeAutomaticControlButton_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="ManualNotificationStatusTextBlock"
+                               Text="Firewall is inactive"
+                               Foreground="#AFC0D4"
+                               FontWeight="Bold"
+                               Margin="0,10,0,22" />
+
+                    <TextBlock Text="How the firewall protects focus"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="When KungFlow detects red cognitive load, the desktop app activates the firewall by changing the Windows Notifications setting at the operating-system level."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="While active, toast popups are blocked so interruptions do not break focus. When load returns to normal, KungFlow restores Windows Notifications."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Grid>
           </StackPanel>
         </ScrollViewer>
 

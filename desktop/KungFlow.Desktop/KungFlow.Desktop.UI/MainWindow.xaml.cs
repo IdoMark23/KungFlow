@@ -148,6 +148,71 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (session is null)
+        {
+            SetChangePasswordMessage("You must be logged in to change password.", true);
+            return;
+        }
+
+        string currentPassword = CurrentPasswordBox.Password;
+        string newPassword = NewPasswordBox.Password;
+        string confirmNewPassword = ConfirmNewPasswordBox.Password;
+        List<string> passwordErrors = [];
+
+        if (string.IsNullOrWhiteSpace(currentPassword))
+        {
+            passwordErrors.Add("Current password is required.");
+        }
+
+        if (string.IsNullOrEmpty(newPassword))
+        {
+            passwordErrors.Add("New password is required.");
+        }
+        else
+        {
+            passwordErrors.AddRange(ValidatePassword(newPassword));
+        }
+
+        if (newPassword != confirmNewPassword)
+        {
+            passwordErrors.Add("New passwords do not match.");
+        }
+
+        if (passwordErrors.Count > 0)
+        {
+            SetChangePasswordMessage(string.Join("  •  ", passwordErrors), true);
+            return;
+        }
+
+        ChangePasswordButton.IsEnabled = false;
+        SetChangePasswordMessage("Changing password...");
+
+        try
+        {
+            await apiClient.ChangePasswordAsync(
+                session.AccessToken,
+                currentPassword,
+                newPassword,
+                confirmNewPassword,
+                CancellationToken.None);
+
+            CurrentPasswordBox.Clear();
+            NewPasswordBox.Clear();
+            ConfirmNewPasswordBox.Clear();
+            SetChangePasswordMessage("Password changed successfully.");
+        }
+        catch (Exception ex)
+        {
+            SetChangePasswordMessage(ex.Message, true);
+        }
+        finally
+        {
+            ChangePasswordButton.IsEnabled = true;
+        }
+    }
+
     private void ShowRegisterButton_Click(object sender, RoutedEventArgs e)
     {
         RegisterEmailTextBox.Text = EmailTextBox.Text.Trim();
@@ -181,14 +246,14 @@ public partial class MainWindow : Window
             errors.Add("Password must contain at least 6 characters.");
         }
 
-        if (!password.Any(character => character is >= 'A' and <= 'Z'))
+        if (password.Length > 20)
         {
-            errors.Add("Password must contain at least one uppercase letter.");
+            errors.Add("Password must contain no more than 20 characters.");
         }
 
-        if (!password.Any(character => character is >= 'a' and <= 'z'))
+        if (!password.Any(character => character is >= 'A' and <= 'Z' or >= 'a' and <= 'z'))
         {
-            errors.Add("Password must contain at least one lowercase letter.");
+            errors.Add("Password must contain at least one English letter.");
         }
 
         if (!password.Any(character => character is >= '0' and <= '9'))
@@ -196,14 +261,9 @@ public partial class MainWindow : Window
             errors.Add("Password must contain at least one number.");
         }
 
-        if (!password.Any(character => character is >= '!' and <= '~' && !char.IsLetterOrDigit(character)))
+        if (password.Any(character => character is not (>= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9')))
         {
-            errors.Add("Password must contain at least one special character.");
-        }
-
-        if (password.Any(character => character is < ' ' or > '~'))
-        {
-            errors.Add("Password may contain printable ASCII characters only.");
+            errors.Add("Password may contain English letters and numbers only.");
         }
 
         return errors;
@@ -252,6 +312,10 @@ public partial class MainWindow : Window
         SetManualNotificationOverride(null);
         focusModeController.SetEnabled(false);
         PasswordBox.Clear();
+        CurrentPasswordBox.Clear();
+        NewPasswordBox.Clear();
+        ConfirmNewPasswordBox.Clear();
+        SetChangePasswordMessage("");
         SetDesktopStatusMessage("");
         ResetStatusView();
         LoggedInView.Visibility = Visibility.Collapsed;
@@ -284,6 +348,21 @@ public partial class MainWindow : Window
         ShowDashboardPage(DashboardPage.Settings);
     }
 
+    private void ActivityCollectionSettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowSettingsSection(SettingsSection.ActivityCollection);
+    }
+
+    private void AccountSecuritySettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowSettingsSection(SettingsSection.AccountSecurity);
+    }
+
+    private void FirewallControlSettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowSettingsSection(SettingsSection.FirewallControl);
+    }
+
     private void PrivacyNavButton_Click(object sender, RoutedEventArgs e)
     {
         ShowDashboardPage(DashboardPage.Privacy);
@@ -300,6 +379,11 @@ public partial class MainWindow : Window
         SetNavButtonState(StatisticsNavButton, page == DashboardPage.Statistics);
         SetNavButtonState(SettingsNavButton, page == DashboardPage.Settings);
         SetNavButtonState(PrivacyNavButton, page == DashboardPage.Privacy);
+
+        if (page == DashboardPage.Settings)
+        {
+            ShowSettingsSection(SettingsSection.ActivityCollection);
+        }
     }
 
     private static void SetNavButtonState(System.Windows.Controls.Button button, bool isActive)
@@ -310,6 +394,36 @@ public partial class MainWindow : Window
         button.Foreground = new SolidColorBrush(isActive
             ? Colors.White
             : MediaColor.FromRgb(148, 163, 184));
+    }
+
+    private void ShowSettingsSection(SettingsSection section)
+    {
+        ActivityCollectionSettingsPanel.Visibility = section == SettingsSection.ActivityCollection
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        AccountSecuritySettingsPanel.Visibility = section == SettingsSection.AccountSecurity
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        FirewallControlSettingsPanel.Visibility = section == SettingsSection.FirewallControl
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        SetSettingsMenuButtonState(ActivityCollectionSettingsButton, section == SettingsSection.ActivityCollection);
+        SetSettingsMenuButtonState(AccountSecuritySettingsButton, section == SettingsSection.AccountSecurity);
+        SetSettingsMenuButtonState(FirewallControlSettingsButton, section == SettingsSection.FirewallControl);
+    }
+
+    private static void SetSettingsMenuButtonState(System.Windows.Controls.Button button, bool isActive)
+    {
+        button.Background = new SolidColorBrush(isActive
+            ? MediaColor.FromRgb(37, 99, 235)
+            : MediaColor.FromRgb(27, 38, 56));
+        button.BorderBrush = new SolidColorBrush(isActive
+            ? MediaColor.FromRgb(96, 165, 250)
+            : MediaColor.FromRgb(51, 65, 85));
+        button.Foreground = new SolidColorBrush(isActive
+            ? Colors.White
+            : MediaColor.FromRgb(203, 213, 225));
     }
 
     private async Task StartSessionAsync(LoginResponse response)
@@ -789,7 +903,7 @@ public partial class MainWindow : Window
 
         RecentFirewallEventsPanel.Children.Clear();
 
-        foreach (FirewallEventResponse firewallEvent in events.Take(5))
+        foreach (FirewallEventResponse firewallEvent in events.Take(10))
         {
             RecentFirewallEventsPanel.Children.Add(CreateFirewallEventRow(firewallEvent));
         }
@@ -838,7 +952,7 @@ public partial class MainWindow : Window
 
         TextBlock timeTextBlock = new()
         {
-            Text = firewallEvent.OccurredAt.ToLocalTime().ToString("HH:mm"),
+            Text = FormatFirewallEventDateTime(firewallEvent.OccurredAt),
             Foreground = new SolidColorBrush(MediaColor.FromRgb(148, 163, 184)),
             FontWeight = FontWeights.Bold,
             VerticalAlignment = VerticalAlignment.Center
@@ -867,7 +981,12 @@ public partial class MainWindow : Window
             ? "Activated"
             : "Deactivated";
 
-        return $"{action} at {firewallEvent.OccurredAt.ToLocalTime():HH:mm}";
+        return $"{action} on {FormatFirewallEventDateTime(firewallEvent.OccurredAt)}";
+    }
+
+    private static string FormatFirewallEventDateTime(DateTimeOffset occurredAt)
+    {
+        return occurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
     }
 
     private static string FormatControlMode(string controlMode)
@@ -992,6 +1111,13 @@ public partial class MainWindow : Window
             isError ? MediaColor.FromRgb(248, 113, 113) : MediaColor.FromRgb(175, 192, 212));
     }
 
+    private void SetChangePasswordMessage(string message, bool isError = false)
+    {
+        ChangePasswordMessageTextBlock.Text = message;
+        ChangePasswordMessageTextBlock.Foreground = new SolidColorBrush(
+            isError ? MediaColor.FromRgb(248, 113, 113) : MediaColor.FromRgb(175, 192, 212));
+    }
+
     private void SetDesktopStatusMessage(string message, bool isError = false)
     {
         DesktopStatusMessageTextBlock.Text = message;
@@ -1112,4 +1238,11 @@ internal enum DashboardPage
     Statistics,
     Settings,
     Privacy
+}
+
+internal enum SettingsSection
+{
+    ActivityCollection,
+    AccountSecurity,
+    FirewallControl
 }

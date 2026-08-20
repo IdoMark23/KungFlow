@@ -145,7 +145,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       logWarn("auth_login_failed", {
         email: normalizedEmail,
-        platform: platform || "extension"
+        platform: platform || "desktop"
       });
 
       return res.status(401).json({
@@ -157,14 +157,14 @@ function createApp({ store = createInMemoryStore() } = {}) {
     await app.locals.store.saveSession({
       accessToken,
       userId: user.id,
-      platform: platform || "extension",
+      platform: platform || "desktop",
       createdAt: new Date().toISOString()
     });
 
     logInfo("auth_login_success", {
       userId: user.id,
       email: user.email,
-      platform: platform || "extension"
+      platform: platform || "desktop"
     });
 
     res.json({
@@ -195,15 +195,24 @@ function createApp({ store = createInMemoryStore() } = {}) {
       });
     }
 
-    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+    if (typeof newPassword !== "string" || newPassword.length === 0) {
       return res.status(400).json({
-        error: "newPassword must be at least 8 characters."
+        error: "newPassword cannot be empty."
       });
     }
 
     if (newPassword !== confirmNewPassword) {
       return res.status(400).json({
         error: "confirmNewPassword must match newPassword."
+      });
+    }
+
+    const passwordErrors = validatePassword(newPassword);
+
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({
+        error: passwordErrors.join(" • "),
+        errors: passwordErrors
       });
     }
 
@@ -246,7 +255,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     if (isInactiveMetricsWindow(metrics)) {
       logInfo("metrics_sample_ignored_inactive", {
         userId: req.user.id,
-        platform: sample.platform || "extension",
+        platform: sample.platform || "desktop",
         metricNames: Object.keys(metrics)
       });
 
@@ -259,7 +268,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
 
     const savedSample = await app.locals.store.saveMetricsSample({
       userId: req.user.id,
-      platform: sample.platform || "extension",
+      platform: sample.platform || "desktop",
       timestamp: sample.timestamp || new Date().toISOString(),
       metrics
     });
@@ -307,7 +316,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
     const controlMode = normalizeAllowedValue(event.controlMode, ["automatic", "manual"]);
     const platform = normalizeAllowedValue(
       event.platform || req.session.platform || "desktop",
-      ["extension", "desktop", "web", "mobile"]
+      ["desktop", "web", "mobile"]
     );
 
     if (!eventType) {
@@ -324,7 +333,7 @@ function createApp({ store = createInMemoryStore() } = {}) {
 
     if (!platform) {
       return res.status(400).json({
-        error: "platform must be extension, desktop, web or mobile."
+        error: "platform must be desktop, web or mobile."
       });
     }
 
@@ -535,7 +544,7 @@ async function saveDemoSamples(req, metricsSamples) {
   for (const [index, metrics] of metricsSamples.entries()) {
     const savedSample = await req.app.locals.store.saveMetricsSample({
       userId: req.user.id,
-      platform: "extension",
+      platform: "desktop",
       timestamp: new Date(baseTimestamp + index * 1000).toISOString(),
       metrics
     });
@@ -578,27 +587,16 @@ function validatePassword(password) {
     errors.push("Password must contain no more than 20 characters.");
   }
 
-  if (!/[A-Z]/.test(password)) {
-    errors.push("Password must contain at least one uppercase letter.");
-  }
-
-  if (!/[a-z]/.test(password)) {
-    errors.push("Password must contain at least one lowercase letter.");
+  if (!/[A-Za-z]/.test(password)) {
+    errors.push("Password must contain at least one English letter.");
   }
 
   if (!/[0-9]/.test(password)) {
     errors.push("Password must contain at least one number.");
   }
 
-  if (![...password].some(character => {
-    const code = character.charCodeAt(0);
-    return code >= 33 && code <= 126 && !/[A-Za-z0-9]/.test(character);
-  })) {
-    errors.push("Password must contain at least one special character.");
-  }
-
-  if (!/^[\x20-\x7E]*$/.test(password)) {
-    errors.push("Password may contain printable ASCII characters only.");
+  if (!/^[A-Za-z0-9]+$/.test(password)) {
+    errors.push("Password may contain English letters and numbers only.");
   }
 
   return errors;

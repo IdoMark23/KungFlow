@@ -14,7 +14,7 @@ BEGIN
         UserId NVARCHAR(64) NOT NULL,
         Platform NVARCHAR(50) NOT NULL
             CONSTRAINT CK_MetricsSamples_Platform
-            CHECK (Platform IN ('extension', 'desktop', 'web', 'mobile')),
+            CHECK (Platform IN ('desktop', 'web', 'mobile')),
         Timestamp DATETIME2 NOT NULL,
         OpenTabsCount INT NULL,
         OpenWindowsCount INT NULL,
@@ -59,7 +59,7 @@ BEGIN
         UserId NVARCHAR(64) NOT NULL,
         Platform NVARCHAR(50) NOT NULL
             CONSTRAINT CK_Sessions_Platform
-            CHECK (Platform IN ('extension', 'desktop', 'web', 'mobile')),
+            CHECK (Platform IN ('desktop', 'web', 'mobile')),
         CreatedAt DATETIME2 NOT NULL
     );
 END;
@@ -100,7 +100,7 @@ BEGIN
         UserId NVARCHAR(64) NOT NULL,
         Platform NVARCHAR(50) NOT NULL
             CONSTRAINT CK_FirewallEvents_Platform
-            CHECK (Platform IN ('extension', 'desktop', 'web', 'mobile')),
+            CHECK (Platform IN ('desktop', 'web', 'mobile')),
         EventType NVARCHAR(50) NOT NULL
             CONSTRAINT CK_FirewallEvents_EventType
             CHECK (EventType IN ('activated', 'deactivated')),
