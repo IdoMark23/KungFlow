@@ -39,6 +39,7 @@ public partial class MainWindow : Window
         metricsPollingTimer.Interval = TimeSpan.FromMilliseconds(250);
         metricsPollingTimer.Tick += MetricsPollingTimer_Tick;
 
+        ApplySavedLoginCredentials();
         ApplySettingsToControls();
         manualNotificationOverride = agentSettings.Firewall.ManualNotificationOverride;
         isLoadingSettings = false;
@@ -65,6 +66,7 @@ public partial class MainWindow : Window
         try
         {
             LoginResponse response = await apiClient.LoginAsync(email, password, CancellationToken.None);
+            DesktopLoginCredentialStore.Save(email, password);
             await StartSessionAsync(response);
         }
         catch (Exception ex)
@@ -136,6 +138,7 @@ public partial class MainWindow : Window
                 username,
                 password,
                 CancellationToken.None);
+            DesktopLoginCredentialStore.Save(email, password);
             await StartSessionAsync(response);
         }
         catch (Exception ex)
@@ -311,7 +314,6 @@ public partial class MainWindow : Window
         metricsCollector.Stop();
         SetManualNotificationOverride(null);
         focusModeController.SetEnabled(false);
-        PasswordBox.Clear();
         CurrentPasswordBox.Clear();
         NewPasswordBox.Clear();
         ConfirmNewPasswordBox.Clear();
@@ -321,6 +323,15 @@ public partial class MainWindow : Window
         LoggedInView.Visibility = Visibility.Collapsed;
         RegisterView.Visibility = Visibility.Collapsed;
         LoginView.Visibility = Visibility.Visible;
+        ApplySavedLoginCredentials();
+    }
+
+    private void ApplySavedLoginCredentials()
+    {
+        DesktopLoginCredentials credentials = DesktopLoginCredentialStore.Load();
+
+        EmailTextBox.Text = credentials.Email;
+        PasswordBox.Password = credentials.Password;
     }
 
     private void ShowLoggedInView(string email)
