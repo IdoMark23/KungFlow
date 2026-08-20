@@ -578,12 +578,12 @@
                        FontWeight="Bold"
                        Foreground="#7C8AA2"
                        Margin="0,0,0,8" />
-            <TextBlock Text="Your Computer Behavior"
+            <TextBlock Text="Your Work Rhythm"
                        FontSize="30"
                        FontWeight="Bold"
                        Foreground="White"
                        Margin="0,0,0,6" />
-            <TextBlock Text="A detailed look at the signals KungFlow tracks to understand cognitive load."
+            <TextBlock Text="A detailed look at the activity signals KungFlow tracks to understand cognitive load."
                        FontSize="14"
                        Foreground="#AFC0D4"
                        TextWrapping="Wrap"
