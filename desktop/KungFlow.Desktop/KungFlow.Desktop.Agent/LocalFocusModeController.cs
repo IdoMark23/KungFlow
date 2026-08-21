@@ -42,6 +42,12 @@ public sealed class LocalFocusModeController
         return isEnabled;
     }
 
+    public bool RefreshState()
+    {
+        isEnabled = ReadCurrentState();
+        return isEnabled;
+    }
+
     private static bool ReadCurrentState()
     {
         using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RegistrySubKey);

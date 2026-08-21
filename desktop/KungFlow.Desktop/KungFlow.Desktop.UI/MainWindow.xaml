@@ -845,7 +845,7 @@
                           Style="{StaticResource SettingsMenuButton}"
                           Click="ActivityCollectionSettingsButton_Click" />
                   <Button x:Name="AccountSecuritySettingsButton"
-                          Content="Account security"
+                          Content="Change password"
                           Style="{StaticResource SettingsMenuButton}"
                           Click="AccountSecuritySettingsButton_Click" />
                   <Button x:Name="FirewallControlSettingsButton"
@@ -896,7 +896,7 @@
                         Visibility="Collapsed">
                   <StackPanel MaxWidth="520"
                               HorizontalAlignment="Left">
-                    <TextBlock Text="Account security"
+                    <TextBlock Text="Change password"
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="White"

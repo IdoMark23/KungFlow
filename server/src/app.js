@@ -207,6 +207,12 @@ function createApp({ store = createInMemoryStore() } = {}) {
       });
     }
 
+    if (newPassword === currentPassword) {
+      return res.status(400).json({
+        error: "New password must be different from the current password."
+      });
+    }
+
     const passwordErrors = validatePassword(newPassword);
 
     if (passwordErrors.length > 0) {

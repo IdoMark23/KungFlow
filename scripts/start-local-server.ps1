@@ -25,7 +25,10 @@ if (-not $SkipDbSetup) {
     & (Join-Path $PSScriptRoot "setup-local-db.ps1") -InstanceName $InstanceName
 }
 
-if (-not (Test-Path (Join-Path $serverDir "node_modules"))) {
+$nodeModulesDir = Join-Path $serverDir "node_modules"
+$localDbDriverDir = Join-Path $nodeModulesDir "msnodesqlv8"
+
+if (-not (Test-Path $nodeModulesDir) -or -not (Test-Path $localDbDriverDir)) {
     $npmCommand = Get-Command "npm.cmd" -ErrorAction SilentlyContinue
 
     if (-not $npmCommand) {
@@ -36,13 +39,21 @@ if (-not (Test-Path (Join-Path $serverDir "node_modules"))) {
         throw "node_modules is missing and npm was not found. Install Node.js LTS and open a new PowerShell window."
     }
 
-    Write-Host "Installing server dependencies..."
+    Write-Host "Installing server dependencies, including the LocalDB driver..."
     Push-Location $serverDir
     try {
-        & $npmCommand.Source install
+        & $npmCommand.Source install --include=optional
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Server dependency installation failed."
+        }
     } finally {
         Pop-Location
     }
+}
+
+if (-not (Test-Path $localDbDriverDir)) {
+    throw "The LocalDB driver 'msnodesqlv8' is still missing after npm install."
 }
 
 $env:KUNGFLOW_DB_MODE = "local"

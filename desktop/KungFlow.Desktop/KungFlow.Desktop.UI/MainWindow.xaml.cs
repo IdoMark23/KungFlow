@@ -183,6 +183,11 @@ public partial class MainWindow : Window
             passwordErrors.Add("New passwords do not match.");
         }
 
+        if (!string.IsNullOrEmpty(newPassword) && newPassword == currentPassword)
+        {
+            passwordErrors.Add("New password must be different from the current password.");
+        }
+
         if (passwordErrors.Count > 0)
         {
             SetChangePasswordMessage(string.Join("  •  ", passwordErrors), true);
@@ -201,14 +206,31 @@ public partial class MainWindow : Window
                 confirmNewPassword,
                 CancellationToken.None);
 
+            DesktopLoginCredentialStore.Save(session.User.Email, newPassword);
+            PasswordBox.Password = newPassword;
             CurrentPasswordBox.Clear();
             NewPasswordBox.Clear();
             ConfirmNewPasswordBox.Clear();
             SetChangePasswordMessage("Password changed successfully.");
+            DesktopDiagnosticLogger.Log(
+                "desktop_password_change_succeeded",
+                new Dictionary<string, string?>
+                {
+                    ["email"] = session.User.Email,
+                    ["credentialsUpdated"] = "true"
+                });
         }
         catch (Exception ex)
         {
             SetChangePasswordMessage(ex.Message, true);
+            DesktopDiagnosticLogger.Log(
+                "desktop_password_change_failed",
+                new Dictionary<string, string?>
+                {
+                    ["email"] = session.User.Email,
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
         }
         finally
         {
@@ -393,6 +415,7 @@ public partial class MainWindow : Window
 
         if (page == DashboardPage.Settings)
         {
+            RefreshNotificationStateFromWindows();
             ShowSettingsSection(SettingsSection.ActivityCollection);
         }
     }
@@ -409,6 +432,11 @@ public partial class MainWindow : Window
 
     private void ShowSettingsSection(SettingsSection section)
     {
+        if (section == SettingsSection.FirewallControl)
+        {
+            RefreshNotificationStateFromWindows();
+        }
+
         ActivityCollectionSettingsPanel.Visibility = section == SettingsSection.ActivityCollection
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -422,6 +450,21 @@ public partial class MainWindow : Window
         SetSettingsMenuButtonState(ActivityCollectionSettingsButton, section == SettingsSection.ActivityCollection);
         SetSettingsMenuButtonState(AccountSecuritySettingsButton, section == SettingsSection.AccountSecurity);
         SetSettingsMenuButtonState(FirewallControlSettingsButton, section == SettingsSection.FirewallControl);
+    }
+
+    private void RefreshNotificationStateFromWindows()
+    {
+        bool notificationsAreSilenced = focusModeController.RefreshState();
+        UpdateManualNotificationControls();
+        UpdateLocalFocusModeIndicator();
+
+        DesktopDiagnosticLogger.Log(
+            "windows_notification_state_refreshed",
+            new Dictionary<string, string?>
+            {
+                ["notificationsState"] = notificationsAreSilenced ? "off" : "on",
+                ["source"] = "settings_navigation"
+            });
     }
 
     private static void SetSettingsMenuButtonState(System.Windows.Controls.Button button, bool isActive)
@@ -560,6 +603,7 @@ public partial class MainWindow : Window
         StatusBodyTextBlock.Text = presentation.Body;
 
         LoadStateTextBlock.Text = presentation.Badge;
+        LoadStateTextBlock.Foreground = new SolidColorBrush(presentation.Color);
         ScoreTextBlock.Text = FormatNullableNumber(status.CognitiveLoadScore);
         BaselineTextBlock.Text = FormatNullableNumber(status.BaselineScore);
         BaselineProgressTextBlock.Text = FormatBaselineProgress(status);
@@ -582,6 +626,7 @@ public partial class MainWindow : Window
     private void ResetStatusView()
     {
         LoadStateTextBlock.Text = "Waiting";
+        LoadStateTextBlock.Foreground = new SolidColorBrush(Colors.White);
         ScoreTextBlock.Text = "-";
         BaselineTextBlock.Text = "-";
         BaselineProgressTextBlock.Text = "-";
@@ -1065,7 +1110,7 @@ public partial class MainWindow : Window
         if (status.State == "overloaded")
         {
             return new FirewallPresentation(
-                "Red - Firewall active",
+                "Firewall active",
                 "KungFlow detected high cognitive load.",
                 "The notification firewall is protecting you from unnecessary interruptions.",
                 "Reduce interruptions",
@@ -1076,7 +1121,7 @@ public partial class MainWindow : Window
         if (status.State == "collecting_baseline" || status.State == "no_metrics")
         {
             return new FirewallPresentation(
-                "Yellow - Calibrating",
+                "Calibrating",
                 "KungFlow is learning your normal work rhythm.",
                 "The firewall is not fully active yet. Keep working normally so the baseline becomes more accurate.",
                 "Learning",
@@ -1085,7 +1130,7 @@ public partial class MainWindow : Window
         }
 
         return new FirewallPresentation(
-            "Green - Open",
+            "Open",
             "KungFlow does not detect cognitive overload.",
             "Notifications can pass through because you currently appear to have enough focus capacity.",
             "No action",
