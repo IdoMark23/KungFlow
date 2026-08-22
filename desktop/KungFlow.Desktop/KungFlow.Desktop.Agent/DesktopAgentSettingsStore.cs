@@ -35,7 +35,10 @@ public static class DesktopAgentSettingsStore
             {
                 IsDataCollectionEnabled = dto.IsDataCollectionEnabled
             };
-            settings.Firewall.UseDefaultDoNotDisturb = dto.Firewall?.UseDefaultDoNotDisturb ?? false;
+            settings.Firewall.UseGlobalNotificationFirewall =
+                dto.Firewall?.UseGlobalNotificationFirewall
+                ?? dto.Firewall?.UseDefaultDoNotDisturb
+                ?? true;
             settings.Firewall.ManualNotificationOverride = dto.Firewall?.ManualNotificationOverride;
 
             foreach (string applicationId in dto.Firewall?.MutedApplicationIds ?? [])
@@ -88,7 +91,8 @@ public static class DesktopAgentSettingsStore
                 Firewall = new FirewallSettingsDto
                 {
                     ManualNotificationOverride = settings.Firewall.ManualNotificationOverride,
-                    UseDefaultDoNotDisturb = settings.Firewall.UseDefaultDoNotDisturb,
+                    UseDefaultDoNotDisturb = settings.Firewall.UseGlobalNotificationFirewall,
+                    UseGlobalNotificationFirewall = settings.Firewall.UseGlobalNotificationFirewall,
                     MutedApplicationIds = settings.Firewall.MutedApplicationIds.ToArray()
                 }
             };
@@ -128,7 +132,9 @@ public static class DesktopAgentSettingsStore
     {
         public bool? ManualNotificationOverride { get; set; }
 
-        public bool UseDefaultDoNotDisturb { get; set; }
+        public bool? UseDefaultDoNotDisturb { get; set; }
+
+        public bool? UseGlobalNotificationFirewall { get; set; }
 
         public string[] MutedApplicationIds { get; set; } = [];
     }

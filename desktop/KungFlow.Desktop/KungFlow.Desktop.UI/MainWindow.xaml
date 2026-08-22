@@ -957,7 +957,7 @@
                                FontWeight="Bold"
                                Foreground="White"
                                Margin="0,0,0,8" />
-                    <TextBlock Text="Use this to manually activate or deactivate the KungFlow Firewall. When active, KungFlow turns off Windows notifications through the operating system."
+                    <TextBlock Text="Use this to manually activate or deactivate the KungFlow Firewall. Global mode turns off all Windows notifications; selective mode targets specific app notification settings when Windows exposes them."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
                                Margin="0,0,0,16" />
@@ -976,22 +976,197 @@
                               HorizontalAlignment="Left"
                               Click="ResumeAutomaticControlButton_Click" />
                     </StackPanel>
-                    <TextBlock x:Name="ManualNotificationStatusTextBlock"
-                               Text="Firewall is inactive"
-                               Foreground="#AFC0D4"
+                     <TextBlock x:Name="ManualNotificationStatusTextBlock"
+                                Text="Firewall is inactive"
+                                Foreground="#AFC0D4"
+                                FontWeight="Bold"
+                                Margin="0,10,0,22" />
+
+                    <TextBlock Text="Firewall mode"
+                               FontSize="18"
                                FontWeight="Bold"
-                               Margin="0,10,0,22" />
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <RadioButton x:Name="GlobalFirewallModeRadioButton"
+                                   GroupName="FirewallMode"
+                                   Foreground="#E2E8F0"
+                                   FontWeight="Bold"
+                                   HorizontalContentAlignment="Stretch"
+                                   Checked="FirewallModeRadioButton_Checked">
+                        <RadioButton.Content>
+                          <Border Background="#172033"
+                                  BorderBrush="#334155"
+                                  BorderThickness="1"
+                                  CornerRadius="8"
+                                  Padding="12"
+                                  Margin="8,0,10,0">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                              </Grid.ColumnDefinitions>
+                              <Border Width="38"
+                                      Height="38"
+                                      CornerRadius="19"
+                                      Background="#1D4ED8"
+                                      Margin="0,0,12,0">
+                                <Viewbox Width="21"
+                                         Height="21"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center">
+                                  <Canvas Width="24" Height="24">
+                                    <Path Stroke="White"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Data="M12 3 C9.2 3 7 5.2 7 8 L7 11.2 C7 12.5 6.5 13.7 5.7 14.7 L4.7 16 C4.3 16.5 4.7 17.2 5.3 17.2 L18.7 17.2 C19.3 17.2 19.7 16.5 19.3 16 L18.3 14.7 C17.5 13.7 17 12.5 17 11.2 L17 8 C17 5.2 14.8 3 12 3 Z" />
+                                    <Path Stroke="White"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          Data="M10.2 20 C10.8 20.7 13.2 20.7 13.8 20" />
+                                  </Canvas>
+                                </Viewbox>
+                              </Border>
+                              <StackPanel Grid.Column="1">
+                                <TextBlock Text="Global mode"
+                                           Foreground="White"
+                                           FontSize="14"
+                                           FontWeight="Bold" />
+                                <TextBlock Text="Turn off all Windows notifications."
+                                           Foreground="#AFC0D4"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"
+                                           Margin="0,3,0,0" />
+                              </StackPanel>
+                            </Grid>
+                          </Border>
+                        </RadioButton.Content>
+                      </RadioButton>
+                      <RadioButton x:Name="SelectiveFirewallModeRadioButton"
+                                   Grid.Column="1"
+                                   GroupName="FirewallMode"
+                                   Foreground="#E2E8F0"
+                                   FontWeight="Bold"
+                                   HorizontalContentAlignment="Stretch"
+                                   Checked="FirewallModeRadioButton_Checked">
+                        <RadioButton.Content>
+                          <Border Background="#172033"
+                                  BorderBrush="#334155"
+                                  BorderThickness="1"
+                                  CornerRadius="8"
+                                  Padding="12"
+                                  Margin="8,0,0,0">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                              </Grid.ColumnDefinitions>
+                              <Border Width="38"
+                                      Height="38"
+                                      CornerRadius="19"
+                                      Background="#0F766E"
+                                      Margin="0,0,12,0">
+                                <Grid>
+                                  <Viewbox Width="20"
+                                           Height="20"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center">
+                                    <Canvas Width="24" Height="24">
+                                      <Path Stroke="White"
+                                            StrokeThickness="2"
+                                            StrokeStartLineCap="Round"
+                                            StrokeEndLineCap="Round"
+                                            StrokeLineJoin="Round"
+                                            Data="M12 3 C9.2 3 7 5.2 7 8 L7 11.2 C7 12.5 6.5 13.7 5.7 14.7 L4.7 16 C4.3 16.5 4.7 17.2 5.3 17.2 L18.7 17.2 C19.3 17.2 19.7 16.5 19.3 16 L18.3 14.7 C17.5 13.7 17 12.5 17 11.2 L17 8 C17 5.2 14.8 3 12 3 Z" />
+                                      <Path Stroke="White"
+                                            StrokeThickness="2"
+                                            StrokeStartLineCap="Round"
+                                            StrokeEndLineCap="Round"
+                                            Data="M10.2 20 C10.8 20.7 13.2 20.7 13.8 20" />
+                                    </Canvas>
+                                  </Viewbox>
+                                  <Border Width="9"
+                                          Height="9"
+                                          CornerRadius="4.5"
+                                          Background="#22C55E"
+                                          BorderBrush="White"
+                                          BorderThickness="1"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Bottom"
+                                          Margin="0,0,8,8" />
+                                </Grid>
+                              </Border>
+                              <StackPanel Grid.Column="1">
+                                <TextBlock Text="Selective mode"
+                                           Foreground="White"
+                                           FontSize="14"
+                                           FontWeight="Bold" />
+                                <TextBlock Text="Silence only selected apps."
+                                           Foreground="#AFC0D4"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"
+                                           Margin="0,3,0,0" />
+                              </StackPanel>
+                            </Grid>
+                          </Border>
+                        </RadioButton.Content>
+                      </RadioButton>
+                    </Grid>
+                    <TextBlock x:Name="FirewallModeStatusTextBlock"
+                               Text="Global mode is active."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,16" />
+
+                    <TextBlock Text="Selective app targets"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,8" />
+                    <TextBlock Text="Choose which apps KungFlow should silence when selective mode is active. The main Windows Notifications toggle must stay on so app-level rules can work."
+                               Foreground="#AFC0D4"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,10" />
+                    <StackPanel x:Name="FirewallTargetsPanel"
+                                Margin="0,0,0,10" />
+                     <TextBlock x:Name="FirewallTargetStatusTextBlock"
+                                Foreground="#FACC15"
+                                TextWrapping="Wrap"
+                                Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,0,22">
+                      <Button x:Name="TestSelectiveAppSilenceButton"
+                              Content="Test silence selected apps"
+                              Style="{StaticResource SecondaryButton}"
+                              Width="220"
+                              HorizontalAlignment="Left"
+                              Click="TestSelectiveAppSilenceButton_Click" />
+                      <Button x:Name="TestSelectiveAppRestoreButton"
+                              Content="Test restore selected apps"
+                              Style="{StaticResource SecondaryButton}"
+                              Width="220"
+                              Margin="12,0,0,0"
+                              HorizontalAlignment="Left"
+                              Click="TestSelectiveAppRestoreButton_Click" />
+                    </StackPanel>
 
                     <TextBlock Text="How the firewall protects focus"
                                FontSize="18"
                                FontWeight="Bold"
                                Foreground="White"
                                Margin="0,0,0,8" />
-                    <TextBlock Text="When KungFlow detects red cognitive load, the desktop app activates the firewall by changing the Windows Notifications setting at the operating-system level."
+                    <TextBlock Text="When KungFlow detects red cognitive load, the desktop app activates the firewall using the mode selected above."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
                                Margin="0,0,0,8" />
-                    <TextBlock Text="While active, toast popups are blocked so interruptions do not break focus. When load returns to normal, KungFlow restores Windows Notifications."
+                    <TextBlock Text="While active, global mode blocks all toast popups, while selective mode tries to silence only selected apps. When load returns to normal, KungFlow restores those notification settings."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap" />
                   </StackPanel>

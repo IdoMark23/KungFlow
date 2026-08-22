@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\icon128.png" />
+    <Resource Include="Assets\outlook-logo.png" />
+    <Resource Include="Assets\whatsapp-logo.png" />
   </ItemGroup>
 
   <ItemGroup>

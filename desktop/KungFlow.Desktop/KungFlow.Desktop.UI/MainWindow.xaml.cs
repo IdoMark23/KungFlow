@@ -2,6 +2,7 @@ using KungFlow.Desktop.Agent;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Runtime.InteropServices;
 using Forms = System.Windows.Forms;
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
     private readonly KungFlowApiClient apiClient = new();
     private readonly DesktopAgentSettings agentSettings = DesktopAgentSettingsStore.Load();
     private readonly LocalFocusModeController focusModeController = new();
+    private readonly ApplicationNotificationFirewallController applicationFirewallController = new();
     private readonly DesktopMetricsCollector metricsCollector = new();
     private readonly DispatcherTimer statusRefreshTimer = new();
     private readonly DispatcherTimer metricsSendTimer = new();
@@ -27,6 +29,7 @@ public partial class MainWindow : Window
     private bool isExitRequested;
     private bool isLoadingSettings = true;
     private bool? manualNotificationOverride;
+    private bool currentFirewallActiveState;
 
     public MainWindow()
     {
@@ -42,6 +45,9 @@ public partial class MainWindow : Window
         ApplySavedLoginCredentials();
         ApplySettingsToControls();
         manualNotificationOverride = agentSettings.Firewall.ManualNotificationOverride;
+        currentFirewallActiveState = agentSettings.Firewall.UseGlobalNotificationFirewall
+            ? focusModeController.IsEnabled()
+            : manualNotificationOverride ?? false;
         isLoadingSettings = false;
 
         ConfigureTrayIcon();
@@ -335,7 +341,7 @@ public partial class MainWindow : Window
         session = null;
         metricsCollector.Stop();
         SetManualNotificationOverride(null);
-        focusModeController.SetEnabled(false);
+        ApplyFirewallState(false);
         CurrentPasswordBox.Clear();
         NewPasswordBox.Clear();
         ConfirmNewPasswordBox.Clear();
@@ -455,6 +461,11 @@ public partial class MainWindow : Window
     private void RefreshNotificationStateFromWindows()
     {
         bool notificationsAreSilenced = focusModeController.RefreshState();
+        if (agentSettings.Firewall.UseGlobalNotificationFirewall)
+        {
+            currentFirewallActiveState = notificationsAreSilenced;
+        }
+
         UpdateManualNotificationControls();
         UpdateLocalFocusModeIndicator();
 
@@ -612,13 +623,7 @@ public partial class MainWindow : Window
         NotificationRecommendationTextBlock.Foreground = new SolidColorBrush(
             presentation.Color);
 
-        bool isFocusModeEnabled = focusModeController.IsEnabled();
-        LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "Active" : "Inactive";
-        LocalFocusModeTextBlock.Foreground = new SolidColorBrush(
-            isFocusModeEnabled
-                ? MediaColor.FromRgb(220, 38, 38)
-                : MediaColor.FromRgb(22, 163, 74));
-        UpdateFirewallStatusSummary();
+        UpdateLocalFocusModeIndicator();
 
         LastStatusUpdateTextBlock.Text = DateTime.Now.ToString("HH:mm:ss");
     }
@@ -667,12 +672,313 @@ public partial class MainWindow : Window
     private void ApplySettingsToControls()
     {
         DataCollectionEnabledCheckBox.IsChecked = agentSettings.IsDataCollectionEnabled;
+        GlobalFirewallModeRadioButton.IsChecked = agentSettings.Firewall.UseGlobalNotificationFirewall;
+        SelectiveFirewallModeRadioButton.IsChecked = !agentSettings.Firewall.UseGlobalNotificationFirewall;
+        RenderFirewallTargetControls();
+        UpdateFirewallModeControls();
+    }
+
+    private void RenderFirewallTargetControls()
+    {
+        FirewallTargetsPanel.Children.Clear();
+
+        foreach (FirewallTarget target in FirewallTargetCatalog.Defaults)
+        {
+            System.Windows.Controls.CheckBox checkBox = new()
+            {
+                Content = CreateFirewallTargetContent(target),
+                Tag = target.Id,
+                IsChecked = agentSettings.Firewall.IsApplicationMuted(target.Id),
+                Foreground = new SolidColorBrush(MediaColor.FromRgb(226, 232, 240)),
+                HorizontalContentAlignment = System.Windows.HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 0, 10),
+                ToolTip = target.Description
+            };
+            checkBox.Checked += FirewallTargetCheckBox_Changed;
+            checkBox.Unchecked += FirewallTargetCheckBox_Changed;
+            FirewallTargetsPanel.Children.Add(checkBox);
+        }
+    }
+
+    private static Border CreateFirewallTargetContent(FirewallTarget target)
+    {
+        Grid contentGrid = new()
+        {
+            Margin = new Thickness(8, 0, 0, 0)
+        };
+        contentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        contentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        Border badge = new()
+        {
+            Width = 38,
+            Height = 38,
+            CornerRadius = new CornerRadius(19),
+            Background = new SolidColorBrush(MediaColor.FromRgb(15, 23, 42)),
+            BorderBrush = new SolidColorBrush(GetFirewallTargetBadgeColor(target.Id)),
+            BorderThickness = new Thickness(1),
+            Margin = new Thickness(0, 0, 12, 0),
+            Child = CreateFirewallTargetLogo(target)
+        };
+
+        StackPanel copyStack = new();
+        copyStack.Children.Add(new TextBlock
+        {
+            Text = target.DisplayName,
+            Foreground = System.Windows.Media.Brushes.White,
+            FontSize = 14,
+            FontWeight = FontWeights.Bold
+        });
+        copyStack.Children.Add(new TextBlock
+        {
+            Text = target.Description,
+            Foreground = new SolidColorBrush(MediaColor.FromRgb(175, 192, 212)),
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 3, 0, 0)
+        });
+
+        Grid.SetColumn(badge, 0);
+        Grid.SetColumn(copyStack, 1);
+        contentGrid.Children.Add(badge);
+        contentGrid.Children.Add(copyStack);
+
+        return new Border
+        {
+            Background = new SolidColorBrush(MediaColor.FromRgb(23, 32, 51)),
+            BorderBrush = new SolidColorBrush(MediaColor.FromRgb(51, 65, 85)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12),
+            Child = contentGrid
+        };
+    }
+
+    private static FrameworkElement CreateFirewallTargetLogo(FirewallTarget target)
+    {
+        string? logoFile = GetFirewallTargetLogoFile(target.Id);
+        if (logoFile is null)
+        {
+            return new TextBlock
+            {
+                Text = "APP",
+                Foreground = System.Windows.Media.Brushes.White,
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+        }
+
+        return new System.Windows.Controls.Image
+        {
+            Source = new BitmapImage(new Uri($"Assets/{logoFile}", UriKind.Relative)),
+            Width = 27,
+            Height = 27,
+            Stretch = Stretch.Uniform,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private static string? GetFirewallTargetLogoFile(string targetId)
+    {
+        return targetId switch
+        {
+            "whatsapp" => "whatsapp-logo.png",
+            "outlook" => "outlook-logo.png",
+            _ => null
+        };
+    }
+
+    private static MediaColor GetFirewallTargetBadgeColor(string targetId)
+    {
+        return targetId switch
+        {
+            "whatsapp" => MediaColor.FromRgb(22, 163, 74),
+            "outlook" => MediaColor.FromRgb(37, 99, 235),
+            _ => MediaColor.FromRgb(15, 118, 110)
+        };
+    }
+
+    private void FirewallModeRadioButton_Checked(object sender, RoutedEventArgs e)
+    {
+        if (isLoadingSettings)
+        {
+            return;
+        }
+
+        bool shouldUseGlobalFirewall = GlobalFirewallModeRadioButton.IsChecked == true;
+
+        if (!shouldUseGlobalFirewall && focusModeController.RefreshState())
+        {
+            isLoadingSettings = true;
+            GlobalFirewallModeRadioButton.IsChecked = true;
+            SelectiveFirewallModeRadioButton.IsChecked = false;
+            isLoadingSettings = false;
+            currentFirewallActiveState = true;
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            SetDesktopStatusMessage(
+                "Selective mode requires Windows Notifications to be on. Deactivate the global firewall first, then choose selective mode.",
+                true);
+            return;
+        }
+
+        agentSettings.Firewall.UseGlobalNotificationFirewall = shouldUseGlobalFirewall;
+        DesktopAgentSettingsStore.Save(agentSettings);
+        UpdateFirewallModeControls();
+
+        try
+        {
+            ApplyFirewallState(currentFirewallActiveState);
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            SetDesktopStatusMessage("Firewall mode updated.");
+        }
+        catch (Exception ex)
+        {
+            SetDesktopStatusMessage(ex.Message, true);
+        }
+    }
+
+    private void FirewallTargetCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (isLoadingSettings ||
+            sender is not System.Windows.Controls.CheckBox checkBox ||
+            checkBox.Tag is not string applicationId)
+        {
+            return;
+        }
+
+        agentSettings.Firewall.SetApplicationMuted(applicationId, checkBox.IsChecked == true);
+        DesktopAgentSettingsStore.Save(agentSettings);
+        UpdateFirewallModeControls();
+
+        if (!agentSettings.Firewall.UseGlobalNotificationFirewall && currentFirewallActiveState)
+        {
+            try
+            {
+                ApplyFirewallState(true);
+                UpdateManualNotificationControls();
+                UpdateLocalFocusModeIndicator();
+                SetDesktopStatusMessage("Selective firewall targets updated.");
+            }
+            catch (Exception ex)
+            {
+                SetDesktopStatusMessage(ex.Message, true);
+            }
+        }
+    }
+
+    private void UpdateFirewallModeControls()
+    {
+        bool usesGlobalFirewall = agentSettings.Firewall.UseGlobalNotificationFirewall;
+        FirewallModeStatusTextBlock.Text = usesGlobalFirewall
+            ? "Global mode is active. KungFlow turns off all Windows notifications when the firewall is active."
+            : "Selective mode is active. KungFlow only changes notification settings for selected apps when Windows exposes matching app entries.";
+
+        FirewallTargetStatusTextBlock.Text = usesGlobalFirewall
+            ? "Selected apps are saved for selective mode, but global mode currently protects all notifications."
+            : BuildSelectedFirewallTargetsText();
+
+        bool hasSelectedTargets = agentSettings.Firewall.MutedApplicationIds.Count > 0;
+        TestSelectiveAppSilenceButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
+        TestSelectiveAppRestoreButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
+        FirewallTargetsPanel.IsEnabled = !usesGlobalFirewall;
+        FirewallTargetsPanel.Opacity = usesGlobalFirewall ? 0.62 : 1.0;
+    }
+
+    private string BuildSelectedFirewallTargetsText()
+    {
+        List<string> selectedTargets = FirewallTargetCatalog.Defaults
+            .Where(target => agentSettings.Firewall.IsApplicationMuted(target.Id))
+            .Select(target => target.DisplayName)
+            .ToList();
+
+        return selectedTargets.Count == 0
+            ? "No app targets selected. Choose at least one app or use global mode."
+            : $"Selected app targets: {string.Join(", ", selectedTargets)}.";
+    }
+
+    private void TestSelectiveAppSilenceButton_Click(object sender, RoutedEventArgs e)
+    {
+        TestSelectiveAppFirewallState(shouldSilence: true);
+    }
+
+    private void TestSelectiveAppRestoreButton_Click(object sender, RoutedEventArgs e)
+    {
+        TestSelectiveAppFirewallState(shouldSilence: false);
+    }
+
+    private void TestSelectiveAppFirewallState(bool shouldSilence)
+    {
+        if (agentSettings.Firewall.UseGlobalNotificationFirewall)
+        {
+            SetDesktopStatusMessage("Switch to selective mode before testing selected app targets.", true);
+            return;
+        }
+
+        if (agentSettings.Firewall.MutedApplicationIds.Count == 0)
+        {
+            SetDesktopStatusMessage("Choose at least one app target before testing selective mode.", true);
+            return;
+        }
+
+        if (focusModeController.RefreshState())
+        {
+            currentFirewallActiveState = true;
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            SetDesktopStatusMessage(
+                "Selective app testing requires Windows Notifications to be on. Deactivate the global firewall first.",
+                true);
+            return;
+        }
+
+        try
+        {
+            ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
+                FirewallTargetCatalog.Defaults,
+                agentSettings.Firewall.MutedApplicationIds,
+                shouldSilence);
+
+            currentFirewallActiveState = shouldSilence && result.HasUpdates;
+            SetManualNotificationOverride(currentFirewallActiveState);
+            FirewallTargetStatusTextBlock.Text = result.Summary;
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            SetDesktopStatusMessage(
+                result.Summary,
+                shouldSilence && !result.HasUpdates);
+
+            DesktopDiagnosticLogger.Log(
+                "selective_app_firewall_test_applied",
+                new Dictionary<string, string?>
+                {
+                    ["requestedState"] = shouldSilence ? "off" : "on",
+                    ["updatedKeys"] = string.Join(",", result.UpdatedRegistryKeys),
+                    ["missingApplications"] = string.Join(",", result.MissingApplications)
+                });
+        }
+        catch (Exception ex)
+        {
+            SetDesktopStatusMessage(ex.Message, true);
+            DesktopDiagnosticLogger.Log(
+                "selective_app_firewall_test_failed",
+                new Dictionary<string, string?>
+                {
+                    ["requestedState"] = shouldSilence ? "off" : "on",
+                    ["errorType"] = ex.GetType().FullName,
+                    ["message"] = ex.Message
+                });
+        }
     }
 
     private async void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
     {
-        bool previousState = focusModeController.IsEnabled();
-        bool shouldSilenceNotifications = !focusModeController.IsEnabled();
+        bool previousState = IsFirewallActive();
+        bool shouldSilenceNotifications = !IsFirewallActive();
 
         DesktopDiagnosticLogger.Log(
             "manual_notification_toggle_started",
@@ -684,20 +990,20 @@ public partial class MainWindow : Window
 
         try
         {
-            focusModeController.SetEnabled(shouldSilenceNotifications);
+            ApplyFirewallState(shouldSilenceNotifications);
             SetManualNotificationOverride(shouldSilenceNotifications);
             UpdateManualNotificationControls();
             UpdateLocalFocusModeIndicator();
-            bool currentState = focusModeController.IsEnabled();
+            bool currentState = IsFirewallActive();
 
             if (previousState != currentState)
             {
-                await RecordFirewallEventAsync(currentState, "manual", "manual_toggle");
+                await RecordFirewallEventAsync(currentState, "manual", BuildFirewallReason("manual_toggle"));
             }
 
             string message = shouldSilenceNotifications
-                ? "KungFlow Firewall activated manually. Windows notifications are off."
-                : "KungFlow Firewall deactivated manually. Windows notifications are on.";
+                ? $"KungFlow Firewall activated manually ({GetFirewallModeLabel()})."
+                : $"KungFlow Firewall deactivated manually ({GetFirewallModeLabel()}).";
             SetDesktopStatusMessage(message);
             DesktopDiagnosticLogger.Log(
                 "manual_notification_toggle_succeeded",
@@ -734,7 +1040,7 @@ public partial class MainWindow : Window
             new Dictionary<string, string?>
             {
                 ["hadManualOverride"] = hadManualOverride ? "true" : "false",
-                ["currentNotificationsState"] = focusModeController.IsEnabled() ? "off" : "on"
+                ["currentNotificationsState"] = IsFirewallActive() ? "off" : "on"
             });
 
         SetDesktopStatusMessage("KungFlow automatic notification control resumed.");
@@ -743,19 +1049,19 @@ public partial class MainWindow : Window
 
     private async Task ApplyAutomaticNotificationStateAsync(bool shouldSilenceNotifications)
     {
-        bool previousState = focusModeController.IsEnabled();
+        bool previousState = IsFirewallActive();
         bool requestedState = manualNotificationOverride ?? shouldSilenceNotifications;
 
-        focusModeController.SetEnabled(requestedState);
+        ApplyFirewallState(requestedState);
 
-        bool currentState = focusModeController.IsEnabled();
+        bool currentState = IsFirewallActive();
 
         if (previousState != currentState)
         {
             string controlMode = manualNotificationOverride.HasValue ? "manual" : "automatic";
             string reason = manualNotificationOverride.HasValue
-                ? "manual_override_applied"
-                : "server_recommendation";
+                ? BuildFirewallReason("manual_override_applied")
+                : BuildFirewallReason("server_recommendation");
 
             await RecordFirewallEventAsync(currentState, controlMode, reason);
 
@@ -775,9 +1081,66 @@ public partial class MainWindow : Window
         UpdateLocalFocusModeIndicator();
     }
 
+    private bool IsFirewallActive()
+    {
+        return currentFirewallActiveState;
+    }
+
+    private void ApplyFirewallState(bool shouldActivate)
+    {
+        if (agentSettings.Firewall.UseGlobalNotificationFirewall)
+        {
+            applicationFirewallController.SetApplicationsSilenced(
+                FirewallTargetCatalog.Defaults,
+                agentSettings.Firewall.MutedApplicationIds,
+                shouldSilence: false);
+            focusModeController.SetEnabled(shouldActivate);
+            currentFirewallActiveState = focusModeController.IsEnabled();
+            FirewallTargetStatusTextBlock.Text = shouldActivate
+                ? "Global firewall is active. All Windows notifications are off."
+                : "Global firewall is inactive. Windows notifications are on.";
+            return;
+        }
+
+        if (shouldActivate && agentSettings.Firewall.MutedApplicationIds.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Selective firewall has no selected app targets. Choose at least one app or switch to global mode.");
+        }
+
+        ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
+            FirewallTargetCatalog.Defaults,
+            agentSettings.Firewall.MutedApplicationIds,
+            shouldActivate);
+
+        if (shouldActivate && !result.HasUpdates)
+        {
+            throw new InvalidOperationException(
+                $"{result.Summary} Open Windows Settings > System > Notifications, toggle the target app once, then try again.");
+        }
+
+        focusModeController.SetEnabled(false);
+        currentFirewallActiveState = shouldActivate && result.HasUpdates;
+        FirewallTargetStatusTextBlock.Text = result.Summary;
+    }
+
+    private string GetFirewallModeLabel()
+    {
+        return agentSettings.Firewall.UseGlobalNotificationFirewall
+            ? "global mode"
+            : "selective app mode";
+    }
+
+    private string BuildFirewallReason(string reason)
+    {
+        return agentSettings.Firewall.UseGlobalNotificationFirewall
+            ? $"{reason}_global"
+            : $"{reason}_selective";
+    }
+
     private void UpdateManualNotificationControls()
     {
-        bool notificationsAreSilenced = focusModeController.IsEnabled();
+        bool notificationsAreSilenced = IsFirewallActive();
         ToggleNotificationsButton.Content = notificationsAreSilenced
             ? "Deactivate firewall"
             : "Activate firewall";
@@ -786,8 +1149,8 @@ public partial class MainWindow : Window
             : "automatic control";
         ManualNotificationStatusTextBlock.Text =
             notificationsAreSilenced
-                ? $"Firewall is active. Windows notifications are off ({controlMode})"
-                : $"Firewall is inactive. Windows notifications are on ({controlMode})";
+                ? $"Firewall is active in {GetFirewallModeLabel()} ({controlMode})"
+                : $"Firewall is inactive in {GetFirewallModeLabel()} ({controlMode})";
         ResumeAutomaticControlButton.IsEnabled = manualNotificationOverride.HasValue;
         ManualNotificationStatusTextBlock.Foreground = new SolidColorBrush(
             notificationsAreSilenced
@@ -809,7 +1172,7 @@ public partial class MainWindow : Window
 
     private void UpdateFirewallStatusSummary()
     {
-        bool isFirewallActive = focusModeController.IsEnabled();
+        bool isFirewallActive = IsFirewallActive();
         bool isManualOverride = manualNotificationOverride.HasValue;
         MediaColor statusColor = isFirewallActive
             ? MediaColor.FromRgb(248, 113, 113)
@@ -820,12 +1183,12 @@ public partial class MainWindow : Window
 
         FirewallStatusSummaryBorder.BorderBrush = new SolidColorBrush(borderColor);
         FirewallStatusSummaryTextBlock.Text = isFirewallActive
-            ? "Firewall active - notifications are blocked"
+            ? $"Firewall active - {GetFirewallModeLabel()} protection is on"
             : "Firewall inactive - notifications can pass through";
         FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(statusColor);
         FirewallStatusDetailTextBlock.Text = isManualOverride
             ? "Manual override is controlling notification protection."
-            : "Automatic protection follows KungFlow's overload detection.";
+            : $"Automatic protection follows KungFlow's overload detection in {GetFirewallModeLabel()}.";
         FirewallStatusSourceTextBlock.Text = isManualOverride ? "Manual" : "Automatic";
         FirewallStatusSourceTextBlock.Foreground = new SolidColorBrush(statusColor);
         FirewallStatusSourceBadgeBorder.BorderBrush = new SolidColorBrush(borderColor);
@@ -833,7 +1196,7 @@ public partial class MainWindow : Window
 
     private void UpdateLocalFocusModeIndicator()
     {
-        bool isFocusModeEnabled = focusModeController.IsEnabled();
+        bool isFocusModeEnabled = IsFirewallActive();
         LocalFocusModeTextBlock.Text = isFocusModeEnabled ? "Active" : "Inactive";
         LocalFocusModeTextBlock.Foreground = new SolidColorBrush(
             isFocusModeEnabled

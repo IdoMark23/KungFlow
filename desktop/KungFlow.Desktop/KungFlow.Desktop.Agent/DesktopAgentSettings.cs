@@ -14,7 +14,7 @@ public sealed class FirewallSettings
     // Null means KungFlow should follow the server recommendation automatically.
     public bool? ManualNotificationOverride { get; set; }
 
-    public bool UseDefaultDoNotDisturb { get; set; }
+    public bool UseGlobalNotificationFirewall { get; set; } = true;
 
     public IReadOnlyCollection<string> MutedApplicationIds => mutedApplicationIds;
 
@@ -38,7 +38,8 @@ public sealed class FirewallSettings
 public sealed record FirewallTarget(
     string Id,
     string DisplayName,
-    string Description);
+    string Description,
+    IReadOnlyList<string> RegistryKeyHints);
 
 public static class FirewallTargetCatalog
 {
@@ -50,10 +51,12 @@ public static class FirewallTargetCatalog
         new FirewallTarget(
             WhatsAppId,
             "WhatsApp",
-            "Reduce messaging interruptions when the firewall is active."),
+            "Reduce messaging interruptions when the firewall is active.",
+            ["WhatsApp", "WhatsAppDesktop", "5319275A.WhatsAppDesktop"]),
         new FirewallTarget(
             OutlookId,
             "Outlook",
-            "Reduce email interruptions when the firewall is active.")
+            "Reduce email interruptions when the firewall is active.",
+            ["Outlook", "Microsoft.Outlook", "Microsoft.Office.OUTLOOK", "MicrosoftCorporationII.OutlookForWindows"])
     };
 }
