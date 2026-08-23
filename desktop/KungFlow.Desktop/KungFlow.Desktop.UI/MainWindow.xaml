@@ -801,7 +801,7 @@
                           Click="RefreshFirewallHistoryButton_Click" />
                 </Grid>
 
-                <UniformGrid Columns="3" Margin="0,0,0,14">
+                <UniformGrid Columns="4" Margin="0,0,0,14">
                   <Border Style="{StaticResource DarkMetricCard}">
                     <StackPanel>
                       <TextBlock Text="Activations today" Foreground="#94A3B8" />
@@ -810,6 +810,18 @@
                                  FontSize="28"
                                  FontWeight="Bold"
                                  Foreground="White"
+                                 Margin="0,12,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource DarkMetricCard}">
+                    <StackPanel>
+                      <TextBlock Text="Protected today" Foreground="#94A3B8" />
+                      <TextBlock x:Name="FirewallProtectedTodayTextBlock"
+                                 Text="0 min"
+                                 FontSize="24"
+                                 FontWeight="Bold"
+                                 Foreground="White"
+                                 TextWrapping="Wrap"
                                  Margin="0,12,0,0" />
                     </StackPanel>
                   </Border>

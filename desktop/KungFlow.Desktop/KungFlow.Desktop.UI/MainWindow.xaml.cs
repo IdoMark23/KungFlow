@@ -1398,6 +1398,8 @@ public partial class MainWindow : Window
             firewallEvent.OccurredAt.ToLocalTime().Date == today);
 
         FirewallActivationsTodayTextBlock.Text = activationsToday.ToString();
+        FirewallProtectedTodayTextBlock.Text = FormatProtectedDuration(
+            CalculateProtectedDurationToday(events));
 
         FirewallEventResponse? latestEvent = events.FirstOrDefault();
 
@@ -1421,6 +1423,7 @@ public partial class MainWindow : Window
     private void ResetFirewallHistoryView()
     {
         FirewallActivationsTodayTextBlock.Text = "0";
+        FirewallProtectedTodayTextBlock.Text = "0 min";
         FirewallLatestActionTextBlock.Text = "No events yet";
         FirewallLatestControlModeTextBlock.Text = "-";
         RecentFirewallEventsPanel.Children.Clear();
@@ -1496,6 +1499,60 @@ public partial class MainWindow : Window
     private static string FormatFirewallEventDateTime(DateTimeOffset occurredAt)
     {
         return occurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private static TimeSpan CalculateProtectedDurationToday(IReadOnlyList<FirewallEventResponse> events)
+    {
+        DateTimeOffset now = DateTimeOffset.Now;
+        DateTime today = now.Date;
+        DateTimeOffset dayStart = new(today, now.Offset);
+        DateTimeOffset? activeSince = null;
+        TimeSpan total = TimeSpan.Zero;
+
+        foreach (FirewallEventResponse firewallEvent in events.OrderBy(firewallEvent => firewallEvent.OccurredAt))
+        {
+            DateTimeOffset occurredAt = firewallEvent.OccurredAt.ToLocalTime();
+
+            if (firewallEvent.EventType == "activated")
+            {
+                activeSince = occurredAt < dayStart ? dayStart : occurredAt;
+                continue;
+            }
+
+            if (firewallEvent.EventType == "deactivated" && activeSince.HasValue)
+            {
+                DateTimeOffset endedAt = occurredAt > now ? now : occurredAt;
+
+                if (endedAt > dayStart)
+                {
+                    total += endedAt - activeSince.Value;
+                }
+
+                activeSince = null;
+            }
+        }
+
+        if (activeSince.HasValue)
+        {
+            total += now - activeSince.Value;
+        }
+
+        return total < TimeSpan.Zero ? TimeSpan.Zero : total;
+    }
+
+    private static string FormatProtectedDuration(TimeSpan duration)
+    {
+        if (duration.TotalMinutes < 1)
+        {
+            return "0 min";
+        }
+
+        if (duration.TotalHours < 1)
+        {
+            return $"{Math.Floor(duration.TotalMinutes)} min";
+        }
+
+        return $"{Math.Floor(duration.TotalHours)}h {duration.Minutes}m";
     }
 
     private static string FormatControlMode(string controlMode)
