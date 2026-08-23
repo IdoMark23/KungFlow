@@ -1140,22 +1140,40 @@
                                 Foreground="#FACC15"
                                 TextWrapping="Wrap"
                                 Margin="0,0,0,12" />
-                    <StackPanel Orientation="Horizontal"
-                                Margin="0,0,0,22">
-                      <Button x:Name="TestSelectiveAppSilenceButton"
-                              Content="Test silence selected apps"
-                              Style="{StaticResource SecondaryButton}"
-                              Width="220"
-                              HorizontalAlignment="Left"
-                              Click="TestSelectiveAppSilenceButton_Click" />
-                      <Button x:Name="TestSelectiveAppRestoreButton"
-                              Content="Test restore selected apps"
-                              Style="{StaticResource SecondaryButton}"
-                              Width="220"
-                              Margin="12,0,0,0"
-                              HorizontalAlignment="Left"
-                              Click="TestSelectiveAppRestoreButton_Click" />
-                    </StackPanel>
+                    <Expander IsExpanded="False"
+                              Foreground="#CBD5E1"
+                              Background="#172033"
+                              BorderBrush="#334155"
+                              BorderThickness="1"
+                              Padding="12"
+                              Margin="0,0,0,22">
+                      <Expander.Header>
+                        <TextBlock Text="Demo tools"
+                                   Foreground="#E2E8F0"
+                                   FontWeight="Bold" />
+                      </Expander.Header>
+                      <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="Manual controls for validating selective firewall behavior. Normal protection is activated automatically by KungFlow or manually by the main firewall button."
+                                   Foreground="#AFC0D4"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+                        <StackPanel Orientation="Horizontal">
+                          <Button x:Name="TestSelectiveAppSilenceButton"
+                                  Content="Silence selected apps"
+                                  Style="{StaticResource SecondaryButton}"
+                                  Width="220"
+                                  HorizontalAlignment="Left"
+                                  Click="TestSelectiveAppSilenceButton_Click" />
+                          <Button x:Name="TestSelectiveAppRestoreButton"
+                                  Content="Restore selected apps"
+                                  Style="{StaticResource SecondaryButton}"
+                                  Width="220"
+                                  Margin="12,0,0,0"
+                                  HorizontalAlignment="Left"
+                                  Click="TestSelectiveAppRestoreButton_Click" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Expander>
 
                     <TextBlock Text="How the firewall protects focus"
                                FontSize="18"
