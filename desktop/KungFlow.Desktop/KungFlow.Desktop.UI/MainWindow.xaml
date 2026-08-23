@@ -1133,6 +1133,12 @@
                     <TextBlock Text="Choose which apps KungFlow should silence when selective mode is active. Only apps that Windows currently exposes as notification senders are shown here."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
+                               Margin="0,0,0,6" />
+                    <TextBlock x:Name="FirewallTargetAvailabilityTextBlock"
+                               Text="Checking supported apps..."
+                               Foreground="#7DD3FC"
+                               FontWeight="Bold"
+                               TextWrapping="Wrap"
                                Margin="0,0,0,10" />
                     <StackPanel x:Name="FirewallTargetsPanel"
                                 Margin="0,0,0,10" />

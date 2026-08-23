@@ -686,6 +686,7 @@ public partial class MainWindow : Window
 
         if (availableFirewallTargets.Count == 0)
         {
+            UpdateFirewallTargetAvailabilityText();
             FirewallTargetsPanel.Children.Add(new TextBlock
             {
                 Text = "No supported app notification entries were found yet. Open a supported app once, or let it send a notification, then return here.",
@@ -712,6 +713,8 @@ public partial class MainWindow : Window
             checkBox.Unchecked += FirewallTargetCheckBox_Changed;
             FirewallTargetsPanel.Children.Add(checkBox);
         }
+
+        UpdateFirewallTargetAvailabilityText();
     }
 
     private static Border CreateFirewallTargetContent(FirewallTarget target)
@@ -934,6 +937,16 @@ public partial class MainWindow : Window
     {
         return availableFirewallTargets.Any(target =>
             agentSettings.Firewall.IsApplicationMuted(target.Id));
+    }
+
+    private void UpdateFirewallTargetAvailabilityText()
+    {
+        int totalSupportedTargets = FirewallTargetCatalog.Defaults.Count;
+        int availableTargetCount = availableFirewallTargets.Count;
+
+        FirewallTargetAvailabilityTextBlock.Text = availableTargetCount == 0
+            ? $"Showing 0 of {totalSupportedTargets} supported apps on this computer."
+            : $"Showing {availableTargetCount} of {totalSupportedTargets} supported apps available on this computer.";
     }
 
     private IReadOnlyList<FirewallTarget> RefreshAvailableFirewallTargets()
