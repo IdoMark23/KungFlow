@@ -10,8 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\chrome-logo.png" />
+    <Resource Include="Assets\discord-logo.png" />
+    <Resource Include="Assets\edge-logo.png" />
     <Resource Include="Assets\icon128.png" />
     <Resource Include="Assets\outlook-logo.png" />
+    <Resource Include="Assets\slack-logo.png" />
+    <Resource Include="Assets\teams-logo.png" />
     <Resource Include="Assets\whatsapp-logo.png" />
   </ItemGroup>
 

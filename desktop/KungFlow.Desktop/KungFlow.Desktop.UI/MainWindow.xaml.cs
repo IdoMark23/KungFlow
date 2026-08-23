@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private bool isLoadingSettings = true;
     private bool? manualNotificationOverride;
     private bool currentFirewallActiveState;
+    private IReadOnlyList<FirewallTarget> availableFirewallTargets = [];
 
     public MainWindow()
     {
@@ -681,8 +682,21 @@ public partial class MainWindow : Window
     private void RenderFirewallTargetControls()
     {
         FirewallTargetsPanel.Children.Clear();
+        RefreshAvailableFirewallTargets();
 
-        foreach (FirewallTarget target in FirewallTargetCatalog.Defaults)
+        if (availableFirewallTargets.Count == 0)
+        {
+            FirewallTargetsPanel.Children.Add(new TextBlock
+            {
+                Text = "No supported app notification entries were found yet. Open a supported app once, or let it send a notification, then return here.",
+                Foreground = new SolidColorBrush(MediaColor.FromRgb(175, 192, 212)),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+            return;
+        }
+
+        foreach (FirewallTarget target in availableFirewallTargets)
         {
             System.Windows.Controls.CheckBox checkBox = new()
             {
@@ -787,6 +801,11 @@ public partial class MainWindow : Window
         {
             "whatsapp" => "whatsapp-logo.png",
             "outlook" => "outlook-logo.png",
+            "teams" => "teams-logo.png",
+            "slack" => "slack-logo.png",
+            "discord" => "discord-logo.png",
+            "chrome" => "chrome-logo.png",
+            "edge" => "edge-logo.png",
             _ => null
         };
     }
@@ -797,6 +816,11 @@ public partial class MainWindow : Window
         {
             "whatsapp" => MediaColor.FromRgb(22, 163, 74),
             "outlook" => MediaColor.FromRgb(37, 99, 235),
+            "teams" => MediaColor.FromRgb(99, 102, 241),
+            "slack" => MediaColor.FromRgb(14, 165, 233),
+            "discord" => MediaColor.FromRgb(88, 101, 242),
+            "chrome" => MediaColor.FromRgb(234, 179, 8),
+            "edge" => MediaColor.FromRgb(6, 182, 212),
             _ => MediaColor.FromRgb(15, 118, 110)
         };
     }
@@ -882,7 +906,7 @@ public partial class MainWindow : Window
             ? "Selected apps are saved for selective mode, but global mode currently protects all notifications."
             : BuildSelectedFirewallTargetsText();
 
-        bool hasSelectedTargets = agentSettings.Firewall.MutedApplicationIds.Count > 0;
+        bool hasSelectedTargets = HasSelectedAvailableFirewallTargets();
         TestSelectiveAppSilenceButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
         TestSelectiveAppRestoreButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
         FirewallTargetsPanel.IsEnabled = !usesGlobalFirewall;
@@ -891,7 +915,12 @@ public partial class MainWindow : Window
 
     private string BuildSelectedFirewallTargetsText()
     {
-        List<string> selectedTargets = FirewallTargetCatalog.Defaults
+        if (availableFirewallTargets.Count == 0)
+        {
+            return "No supported app notification entries are currently available for selective mode.";
+        }
+
+        List<string> selectedTargets = availableFirewallTargets
             .Where(target => agentSettings.Firewall.IsApplicationMuted(target.Id))
             .Select(target => target.DisplayName)
             .ToList();
@@ -899,6 +928,18 @@ public partial class MainWindow : Window
         return selectedTargets.Count == 0
             ? "No app targets selected. Choose at least one app or use global mode."
             : $"Selected app targets: {string.Join(", ", selectedTargets)}.";
+    }
+
+    private bool HasSelectedAvailableFirewallTargets()
+    {
+        return availableFirewallTargets.Any(target =>
+            agentSettings.Firewall.IsApplicationMuted(target.Id));
+    }
+
+    private IReadOnlyList<FirewallTarget> RefreshAvailableFirewallTargets()
+    {
+        availableFirewallTargets = applicationFirewallController.GetAvailableTargets(FirewallTargetCatalog.Defaults);
+        return availableFirewallTargets;
     }
 
     private void TestSelectiveAppSilenceButton_Click(object sender, RoutedEventArgs e)
@@ -919,7 +960,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (agentSettings.Firewall.MutedApplicationIds.Count == 0)
+        IReadOnlyList<FirewallTarget> targets = RefreshAvailableFirewallTargets();
+
+        if (!targets.Any(target => agentSettings.Firewall.IsApplicationMuted(target.Id)))
         {
             SetDesktopStatusMessage("Choose at least one app target before testing selective mode.", true);
             return;
@@ -939,7 +982,7 @@ public partial class MainWindow : Window
         try
         {
             ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
-                FirewallTargetCatalog.Defaults,
+                targets,
                 agentSettings.Firewall.MutedApplicationIds,
                 shouldSilence);
 
@@ -1088,10 +1131,12 @@ public partial class MainWindow : Window
 
     private void ApplyFirewallState(bool shouldActivate)
     {
+        IReadOnlyList<FirewallTarget> targets = RefreshAvailableFirewallTargets();
+
         if (agentSettings.Firewall.UseGlobalNotificationFirewall)
         {
             applicationFirewallController.SetApplicationsSilenced(
-                FirewallTargetCatalog.Defaults,
+                targets,
                 agentSettings.Firewall.MutedApplicationIds,
                 shouldSilence: false);
             focusModeController.SetEnabled(shouldActivate);
@@ -1102,14 +1147,14 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (shouldActivate && agentSettings.Firewall.MutedApplicationIds.Count == 0)
+        if (shouldActivate && !targets.Any(target => agentSettings.Firewall.IsApplicationMuted(target.Id)))
         {
             throw new InvalidOperationException(
                 "Selective firewall has no selected app targets. Choose at least one app or switch to global mode.");
         }
 
         ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
-            FirewallTargetCatalog.Defaults,
+            targets,
             agentSettings.Firewall.MutedApplicationIds,
             shouldActivate);
 

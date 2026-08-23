@@ -8,6 +8,20 @@ public sealed class ApplicationNotificationFirewallController
         @"Software\Microsoft\Windows\CurrentVersion\Notifications\Settings";
     private const string EnabledValueName = "Enabled";
 
+    public IReadOnlyList<FirewallTarget> GetAvailableTargets(IReadOnlyList<FirewallTarget> targets)
+    {
+        using RegistryKey? settingsKey = Registry.CurrentUser.OpenSubKey(NotificationSettingsSubKey, writable: false);
+
+        if (settingsKey is null)
+        {
+            return [];
+        }
+
+        return targets
+            .Where(target => FindMatchingSubKeyNames(settingsKey, target).Count > 0)
+            .ToList();
+    }
+
     public ApplicationFirewallApplyResult SetApplicationsSilenced(
         IReadOnlyList<FirewallTarget> availableTargets,
         IReadOnlyCollection<string> selectedApplicationIds,
@@ -43,11 +57,7 @@ public sealed class ApplicationNotificationFirewallController
 
         foreach (FirewallTarget target in selectedTargets)
         {
-            List<string> matchingSubKeyNames = settingsKey
-                .GetSubKeyNames()
-                .Where(subKeyName => IsMatchingTargetSubKey(subKeyName, target))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            List<string> matchingSubKeyNames = FindMatchingSubKeyNames(settingsKey, target);
 
             if (matchingSubKeyNames.Count == 0)
             {
@@ -73,7 +83,10 @@ public sealed class ApplicationNotificationFirewallController
                 }
                 else
                 {
-                    applicationKey.DeleteValue(EnabledValueName, throwOnMissingValue: false);
+                    applicationKey.SetValue(
+                        EnabledValueName,
+                        1,
+                        RegistryValueKind.DWord);
                 }
 
                 updatedRegistryKeys.Add(subKeyName);
@@ -91,7 +104,7 @@ public sealed class ApplicationNotificationFirewallController
             {
                 ["requestedState"] = shouldSilence ? "off" : "on",
                 ["updatedKeys"] = string.Join(",", updatedRegistryKeys),
-                ["missingApplications"] = string.Join(",", missingApplications)
+            ["missingApplications"] = string.Join(",", missingApplications)
             });
 
         return new ApplicationFirewallApplyResult(
@@ -99,6 +112,15 @@ public sealed class ApplicationNotificationFirewallController
             updatedRegistryKeys,
             missingApplications,
             BuildSummary(shouldSilence, updatedRegistryKeys, missingApplications));
+    }
+
+    private static List<string> FindMatchingSubKeyNames(RegistryKey settingsKey, FirewallTarget target)
+    {
+        return settingsKey
+            .GetSubKeyNames()
+            .Where(subKeyName => IsMatchingTargetSubKey(subKeyName, target))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static bool IsMatchingTargetSubKey(string subKeyName, FirewallTarget target)

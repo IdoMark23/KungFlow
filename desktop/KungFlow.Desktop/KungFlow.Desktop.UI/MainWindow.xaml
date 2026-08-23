@@ -1130,7 +1130,7 @@
                                FontWeight="Bold"
                                Foreground="White"
                                Margin="0,0,0,8" />
-                    <TextBlock Text="Choose which apps KungFlow should silence when selective mode is active. The main Windows Notifications toggle must stay on so app-level rules can work."
+                    <TextBlock Text="Choose which apps KungFlow should silence when selective mode is active. Only apps that Windows currently exposes as notification senders are shown here."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
                                Margin="0,0,0,10" />
