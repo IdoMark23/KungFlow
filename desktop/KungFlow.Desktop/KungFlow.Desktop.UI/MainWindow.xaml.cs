@@ -1223,6 +1223,8 @@ public partial class MainWindow : Window
         FirewallStatusSummaryTextBlock.Text = "Firewall inactive - notifications can pass through";
         FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(Colors.White);
         FirewallStatusDetailTextBlock.Text = "Automatic protection";
+        FirewallStatusModeTextBlock.Text = GetFirewallModeDisplayName();
+        FirewallStatusProtectedAppsTextBlock.Text = BuildFirewallProtectedAppsSummary();
         FirewallStatusSourceTextBlock.Text = "Automatic";
         FirewallStatusSourceTextBlock.Foreground = new SolidColorBrush(MediaColor.FromRgb(203, 213, 225));
         FirewallStatusSourceBadgeBorder.BorderBrush = new SolidColorBrush(MediaColor.FromRgb(71, 85, 105));
@@ -1247,9 +1249,39 @@ public partial class MainWindow : Window
         FirewallStatusDetailTextBlock.Text = isManualOverride
             ? "Manual override is controlling notification protection."
             : $"Automatic protection follows KungFlow's overload detection in {GetFirewallModeLabel()}.";
+        FirewallStatusModeTextBlock.Text = GetFirewallModeDisplayName();
+        FirewallStatusProtectedAppsTextBlock.Text = BuildFirewallProtectedAppsSummary();
         FirewallStatusSourceTextBlock.Text = isManualOverride ? "Manual" : "Automatic";
         FirewallStatusSourceTextBlock.Foreground = new SolidColorBrush(statusColor);
         FirewallStatusSourceBadgeBorder.BorderBrush = new SolidColorBrush(borderColor);
+    }
+
+    private string GetFirewallModeDisplayName()
+    {
+        return agentSettings.Firewall.UseGlobalNotificationFirewall
+            ? "Global"
+            : "Selective";
+    }
+
+    private string BuildFirewallProtectedAppsSummary()
+    {
+        if (agentSettings.Firewall.UseGlobalNotificationFirewall)
+        {
+            return "All notifications";
+        }
+
+        IReadOnlyList<FirewallTarget> targets = availableFirewallTargets.Count > 0
+            ? availableFirewallTargets
+            : RefreshAvailableFirewallTargets();
+
+        List<string> selectedTargets = targets
+            .Where(target => agentSettings.Firewall.IsApplicationMuted(target.Id))
+            .Select(target => target.DisplayName)
+            .ToList();
+
+        return selectedTargets.Count == 0
+            ? "No apps selected"
+            : string.Join(", ", selectedTargets);
     }
 
     private void UpdateLocalFocusModeIndicator()
