@@ -499,82 +499,79 @@
                          TextWrapping="Wrap"
                          Margin="0,0,0,24" />
 
-              <UniformGrid Columns="2" Width="560">
-                <Border Background="#1B2638"
-                        BorderBrush="#334155"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="14"
-                        Margin="0,0,10,0">
-                  <StackPanel>
-                    <TextBlock Text="Firewall action"
-                               Foreground="#94A3B8"
-                               FontSize="12"
-                               FontWeight="Bold" />
-                    <TextBlock x:Name="NotificationRecommendationTextBlock"
-                               Text="-"
-                               FontSize="17"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               TextWrapping="Wrap"
-                               Margin="0,8,0,0" />
-                  </StackPanel>
-                </Border>
-
-                <Border Background="#1B2638"
-                        BorderBrush="#334155"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="14"
-                        Margin="10,0,0,0">
-                  <StackPanel>
-                    <TextBlock Text="Desktop protection"
-                               Foreground="#94A3B8"
-                               FontSize="12"
-                               FontWeight="Bold" />
-                    <TextBlock x:Name="LocalFocusModeTextBlock"
-                               Text="Inactive"
-                               FontSize="17"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               TextWrapping="Wrap"
-                               Margin="0,8,0,0" />
-                  </StackPanel>
-                </Border>
-              </UniformGrid>
-
               <Border x:Name="FirewallStatusSummaryBorder"
                       Background="#1B2638"
                       BorderBrush="#334155"
                       BorderThickness="1"
                       CornerRadius="8"
-                      Padding="16"
+                      Padding="18"
                       Width="560"
-                      Margin="0,16,0,0">
+                      Margin="0,4,0,0">
                 <Grid>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
                   </Grid.ColumnDefinitions>
-                  <StackPanel>
-                    <TextBlock Text="Notification firewall"
+                  <Border x:Name="FirewallShieldIconBorder"
+                          Width="76"
+                          Height="76"
+                          CornerRadius="38"
+                          Background="#14532D"
+                          Margin="0,0,18,0"
+                          VerticalAlignment="Top">
+                    <Viewbox Width="42"
+                             Height="42"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                      <Canvas Width="24" Height="24">
+                        <Path x:Name="FirewallShieldPath"
+                              Fill="White"
+                              Data="M12 2.5 L19 5.7 L19 11.3 C19 16.1 16.1 20.1 12 21.5 C7.9 20.1 5 16.1 5 11.3 L5 5.7 Z" />
+                        <Path x:Name="FirewallShieldBreakPath"
+                              Stroke="#0F172A"
+                              StrokeThickness="2"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Visibility="Collapsed"
+                              Data="M13 6 L10.5 10.5 L13 10.5 L10 18" />
+                      </Canvas>
+                    </Viewbox>
+                  </Border>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Text="FOCUS FIREWALL"
                                Foreground="#94A3B8"
                                FontSize="12"
                                FontWeight="Bold" />
+                    <Border x:Name="FirewallProtectionBadgeBorder"
+                            Background="#193829"
+                            BorderBrush="#166534"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="10,5"
+                            HorizontalAlignment="Left"
+                            Margin="0,8,0,0">
+                      <TextBlock x:Name="FirewallProtectionBadgeTextBlock"
+                                 Text="Protected"
+                                 FontSize="12"
+                                 FontWeight="Bold"
+                                 Foreground="#86EFAC" />
+                    </Border>
                     <TextBlock x:Name="FirewallStatusSummaryTextBlock"
-                               Text="Firewall inactive - notifications can pass through"
-                               FontSize="18"
+                               Text="No firewall activation needed right now."
+                               FontSize="20"
                                FontWeight="Bold"
                                Foreground="White"
                                TextWrapping="Wrap"
-                               Margin="0,8,16,0" />
+                               Margin="0,12,0,0" />
                     <TextBlock x:Name="FirewallStatusDetailTextBlock"
-                               Text="Automatic protection"
+                               Text="KungFlow is monitoring your work rhythm and notifications can pass through while load is low."
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
-                               Margin="0,5,16,0" />
-                    <Grid Margin="0,14,16,0">
+                               Margin="0,7,0,0" />
+                    <Grid Margin="0,16,0,0">
                       <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
@@ -617,22 +614,29 @@
                                      Margin="0,5,0,0" />
                         </StackPanel>
                       </Border>
+                      <Border x:Name="FirewallStatusSourceBadgeBorder"
+                              Grid.Column="2"
+                              Background="#172033"
+                              BorderBrush="#334155"
+                              BorderThickness="1"
+                              CornerRadius="8"
+                              Padding="10"
+                              Margin="8,0,0,0">
+                        <StackPanel>
+                          <TextBlock Text="Control"
+                                     Foreground="#94A3B8"
+                                     FontSize="11"
+                                     FontWeight="Bold" />
+                          <TextBlock x:Name="FirewallStatusSourceTextBlock"
+                                     Text="Automatic"
+                                     Foreground="White"
+                                     FontWeight="Bold"
+                                     TextWrapping="Wrap"
+                                     Margin="0,5,0,0" />
+                        </StackPanel>
+                      </Border>
                     </Grid>
                   </StackPanel>
-                  <Border x:Name="FirewallStatusSourceBadgeBorder"
-                          Grid.Column="1"
-                          Background="#29344A"
-                          BorderBrush="#475569"
-                          BorderThickness="1"
-                          CornerRadius="14"
-                          Padding="10,5"
-                          VerticalAlignment="Center">
-                    <TextBlock x:Name="FirewallStatusSourceTextBlock"
-                               Text="Automatic"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="#CBD5E1" />
-                  </Border>
                 </Grid>
               </Border>
 
@@ -1018,9 +1022,35 @@
                                Foreground="#AFC0D4"
                                TextWrapping="Wrap"
                                Margin="0,0,0,16" />
+                    <Border x:Name="FirewallControlModeStatusBorder"
+                            Background="#172033"
+                            BorderBrush="#2563EB"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14"
+                            Margin="0,0,0,16">
+                      <StackPanel>
+                        <TextBlock Text="Control mode"
+                                   Foreground="#94A3B8"
+                                   FontSize="12"
+                                   FontWeight="Bold" />
+                        <TextBlock x:Name="FirewallControlModeTitleTextBlock"
+                                   Text="Automatic control active"
+                                   Foreground="White"
+                                   FontSize="17"
+                                   FontWeight="Bold"
+                                   TextWrapping="Wrap"
+                                   Margin="0,6,0,0" />
+                        <TextBlock x:Name="FirewallControlModeDetailTextBlock"
+                                   Text="Recommended: KungFlow activates the firewall when cognitive load rises and restores notifications when load returns to normal."
+                                   Foreground="#AFC0D4"
+                                   TextWrapping="Wrap"
+                                   Margin="0,5,0,0" />
+                      </StackPanel>
+                    </Border>
                     <StackPanel Orientation="Horizontal">
                       <Button x:Name="ToggleNotificationsButton"
-                              Content="Activate firewall"
+                              Content="Activate firewall manually"
                               Style="{StaticResource PrimaryButton}"
                               Width="230"
                               HorizontalAlignment="Left"
