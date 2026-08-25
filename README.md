@@ -45,8 +45,8 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 | `server/` | Backend API, authentication, cognitive-load calculation, SQL Server storage, firewall events, landing page assets | Node.js / Express / SQL Server |
 | `server/db/` | Database setup script, tables, constraints, and stored procedures | T-SQL |
 | `scripts/` | Local development helpers for LocalDB, server startup, and desktop startup | PowerShell |
-| `docs/` | Product, research, presentation, poster, and demo assets | PDF / PPTX / DOCX / media |
-| `Hub/` | Workshop and entrepreneurship material from earlier project stages | Documents |
+| `docs/` | Product, research, presentation, poster, demo assets, and workshop material | PDF / PPTX / DOCX / media |
+| `docs/Hub/` | Final workshop hub, including the current investor pitch deck used for presentation | PPTX |
 
 ### Key Documents
 
@@ -57,7 +57,8 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 | [`docs/research/Kungflow_experiment.docx`](docs/research/Kungflow_experiment.docx) | Internal experiment and validation material |
 | [`docs/poster/KungFlow_Project_Poster_15002936.pdf`](docs/poster/KungFlow_Project_Poster_15002936.pdf) | Final project poster for printing |
 | [`docs/product-demo-assets/`](docs/product-demo-assets/) | Demo video and product screenshots |
-| [`docs/investors presentation/`](docs/investors%20presentation/) | Investor presentation material |
+| [`docs/Hub/KungFlow Investor Pitch.pptx`](docs/Hub/KungFlow%20Investor%20Pitch.pptx) | Current final investor pitch deck |
+| [`docs/investors presentation/KungFlow Investor Pitch.pptx`](docs/investors%20presentation/KungFlow%20Investor%20Pitch.pptx) | Investor presentation copy |
 
 ---
 
@@ -156,58 +157,6 @@ KungFlow is designed around activity metadata, not content capture.
 - The server stores password hashes, not raw passwords.
 - The firewall changes local Windows notification settings according to the user's configuration.
 - Demo and development data can be reset locally through the database script or demo endpoints.
-
----
-
-## Developer Setup
-
-These commands are for running the prototype locally on Windows. They are intentionally lower in the README because the main project story is the product, not the startup sequence.
-
-### Prerequisites
-
-| Tool | Used for |
-| --- | --- |
-| Node.js LTS | Running the Node.js server |
-| .NET SDK | Running the Windows desktop app |
-| SQL Server LocalDB or SQL Server Express | Local SQL database |
-| `sqlcmd` | Applying the database setup script |
-| ODBC Driver 17 for SQL Server | Local SQL Server connection |
-
-### Local Database
-
-```powershell
-.\scripts\setup-local-db.ps1
-```
-
-This creates or starts the `MSSQLLocalDB` LocalDB instance and applies `server/db/setup.sql` to the `KungFlowDB` database.
-
-### Local Server
-
-```powershell
-.\scripts\start-local-server.ps1
-```
-
-The local server script sets:
-
-- `KUNGFLOW_DB_MODE=local`
-- `SQLSERVER_SERVER=(localdb)\MSSQLLocalDB`
-- `SQLSERVER_DRIVER=ODBC Driver 17 for SQL Server`
-
-Cloud or deployed environments should not set `KUNGFLOW_DB_MODE=local`.
-
-### Desktop App
-
-```powershell
-.\scripts\start-desktop-ui.ps1
-```
-
-The desktop app expects the API server to be available at `http://127.0.0.1:3000` during local development.
-
-If PowerShell blocks script execution, run a script through:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start-local-server.ps1
-```
 
 ---
 
