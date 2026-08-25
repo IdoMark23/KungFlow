@@ -45,20 +45,18 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 | `server/` | Backend API, authentication, cognitive-load calculation, SQL Server storage, firewall events, landing page assets | Node.js / Express / SQL Server |
 | `server/db/` | Database setup script, tables, constraints, and stored procedures | T-SQL |
 | `scripts/` | Local development helpers for LocalDB, server startup, and desktop startup | PowerShell |
-| `docs/` | Product, research, presentation, poster, demo assets, and workshop material | PDF / PPTX / DOCX / media |
-| `docs/Hub/` | Final workshop hub, including the current investor pitch deck used for presentation | PPTX |
+| `Hub/` | Product documents, research, workshop presentations, final investor pitch, poster files, demo video, and screenshots | PDF / PPTX / DOCX / media |
 
 ### Key Documents
 
 | Document | What it contains |
 | --- | --- |
-| [`docs/product/PRD.docx`](docs/product/PRD.docx) | Product requirements and project definition |
-| [`docs/presentation/KungFlow.pdf`](docs/presentation/KungFlow.pdf) | Main product presentation |
-| [`docs/research/Kungflow_experiment.docx`](docs/research/Kungflow_experiment.docx) | Internal experiment and validation material |
-| [`docs/poster/KungFlow_Project_Poster_15002936.pdf`](docs/poster/KungFlow_Project_Poster_15002936.pdf) | Final project poster for printing |
-| [`docs/product-demo-assets/`](docs/product-demo-assets/) | Demo video and product screenshots |
-| [`docs/Hub/KungFlow Investor Pitch.pptx`](docs/Hub/KungFlow%20Investor%20Pitch.pptx) | Current final investor pitch deck |
-| [`docs/investors presentation/KungFlow Investor Pitch.pptx`](docs/investors%20presentation/KungFlow%20Investor%20Pitch.pptx) | Investor presentation copy |
+| [`Hub/product/PRD.docx`](Hub/product/PRD.docx) | Product requirements and project definition |
+| [`Hub/mid presentation/KungFlow.pdf`](Hub/mid%20presentation/KungFlow.pdf) | Main workshop product presentation |
+| [`Hub/research/Kungflow_experiment.docx`](Hub/research/Kungflow_experiment.docx) | Internal experiment and validation material |
+| [`Hub/poster/KungFlow_Project_Poster_15002936.pdf`](Hub/poster/KungFlow_Project_Poster_15002936.pdf) | Final project poster for printing |
+| [`Hub/product/product-demo-assets/`](Hub/product/product-demo-assets/) | Demo video and product screenshots |
+| [`Hub/investors presentation/KungFlow Investor Pitch.pptx`](Hub/investors%20presentation/KungFlow%20Investor%20Pitch.pptx) | Current final investor pitch deck |
 
 ---
 
@@ -179,7 +177,7 @@ KungFlow is designed around activity metadata, not content capture.
 - PMC, 2023: reducing interruptions improves performance - https://pmc.ncbi.nlm.nih.gov/articles/PMC10244611/
 - ResearchGate, 2010: context switching between browser tabs increases cognitive load - https://www.researchgate.net/publication/221515310_A_Study_of_Tabbed_Browsing_Among_Mozilla_Firefox_Users
 - ScienceDirect, 2009: typing patterns as an indicator of stress - https://www.sciencedirect.com/science/article/abs/pii/S1071581909000937
-- Internal experiment - [`docs/research/Kungflow_experiment.docx`](docs/research/Kungflow_experiment.docx)
+- Internal experiment - [`Hub/research/Kungflow_experiment.docx`](Hub/research/Kungflow_experiment.docx)
 
 ### Existing Products
 
