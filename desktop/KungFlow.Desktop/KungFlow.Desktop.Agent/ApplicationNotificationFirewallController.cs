@@ -83,10 +83,7 @@ public sealed class ApplicationNotificationFirewallController
                 }
                 else
                 {
-                    applicationKey.SetValue(
-                        EnabledValueName,
-                        1,
-                        RegistryValueKind.DWord);
+                    applicationKey.DeleteValue(EnabledValueName, throwOnMissingValue: false);
                 }
 
                 updatedRegistryKeys.Add(subKeyName);
@@ -95,8 +92,39 @@ public sealed class ApplicationNotificationFirewallController
 
         if (updatedRegistryKeys.Count > 0)
         {
+            WindowsNotificationDatabaseApplyResult databaseResult =
+                WindowsNotificationDatabaseController.SetToastEnabledForApplicationKeys(
+                    updatedRegistryKeys,
+                    !shouldSilence);
+
+            if (!databaseResult.Succeeded)
+            {
+                DesktopDiagnosticLogger.Log(
+                    "windows_notification_database_update_failed",
+                    new Dictionary<string, string?>
+                    {
+                        ["requestedState"] = shouldSilence ? "off" : "on",
+                        ["updatedKeys"] = string.Join(",", updatedRegistryKeys),
+                        ["message"] = databaseResult.ErrorMessage
+                    });
+            }
+            else
+            {
+                DesktopDiagnosticLogger.Log(
+                    "windows_notification_database_updated",
+                    new Dictionary<string, string?>
+                    {
+                        ["requestedState"] = shouldSilence ? "off" : "on",
+                        ["toastStates"] = string.Join(
+                            ",",
+                            databaseResult.ToastStates.Select(pair => $"{pair.Key}:{pair.Value}"))
+                    });
+            }
+
             WindowsNotificationServiceRefresher.RefreshPushNotificationService();
         }
+
+        Dictionary<string, string> verifiedStates = ReadEnabledValueStates(updatedRegistryKeys);
 
         DesktopDiagnosticLogger.Log(
             "windows_app_notification_firewall_applied",
@@ -104,7 +132,10 @@ public sealed class ApplicationNotificationFirewallController
             {
                 ["requestedState"] = shouldSilence ? "off" : "on",
                 ["updatedKeys"] = string.Join(",", updatedRegistryKeys),
-            ["missingApplications"] = string.Join(",", missingApplications)
+                ["missingApplications"] = string.Join(",", missingApplications),
+                ["verifiedEnabledValues"] = string.Join(
+                    ",",
+                    verifiedStates.Select(pair => $"{pair.Key}:{pair.Value}"))
             });
 
         return new ApplicationFirewallApplyResult(
@@ -127,6 +158,47 @@ public sealed class ApplicationNotificationFirewallController
     {
         return target.RegistryKeyHints.Any(hint =>
             subKeyName.Contains(hint, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static Dictionary<string, string> ReadEnabledValueStates(
+        IReadOnlyCollection<string> subKeyNames)
+    {
+        Dictionary<string, string> states = new(StringComparer.OrdinalIgnoreCase);
+
+        if (subKeyNames.Count == 0)
+        {
+            return states;
+        }
+
+        using RegistryKey? settingsKey = Registry.CurrentUser.OpenSubKey(NotificationSettingsSubKey, writable: false);
+
+        if (settingsKey is null)
+        {
+            foreach (string subKeyName in subKeyNames)
+            {
+                states[subKeyName] = "settings_key_missing";
+            }
+
+            return states;
+        }
+
+        foreach (string subKeyName in subKeyNames)
+        {
+            using RegistryKey? applicationKey = settingsKey.OpenSubKey(subKeyName, writable: false);
+
+            if (applicationKey is null)
+            {
+                states[subKeyName] = "app_key_missing";
+                continue;
+            }
+
+            object? enabledValue = applicationKey.GetValue(EnabledValueName);
+            states[subKeyName] = enabledValue is null
+                ? "value_missing"
+                : enabledValue.ToString() ?? "value_unreadable";
+        }
+
+        return states;
     }
 
     private static string BuildSummary(

@@ -1,9 +1,15 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace KungFlow.Desktop.Agent;
 
 internal static class WindowsNotificationServiceRefresher
 {
+    private const int HwndBroadcast = 0xffff;
+    private const uint WmSettingChange = 0x001A;
+    private const uint SmtoAbortIfHung = 0x0002;
+    private const uint BroadcastTimeoutMilliseconds = 1000;
+
     public static void RefreshPushNotificationService()
     {
         const string command =
@@ -16,6 +22,33 @@ internal static class WindowsNotificationServiceRefresher
             "Restart-Service -Name $svc.Name -Force";
 
         RunPowerShell(command);
+        BroadcastNotificationSettingsChanged();
+    }
+
+    public static void RefreshApplicationNotificationSettings()
+    {
+        BroadcastNotificationSettingsChanged();
+    }
+
+    private static void BroadcastNotificationSettingsChanged()
+    {
+        string[] settingAreas =
+        [
+            @"Software\Microsoft\Windows\CurrentVersion\PushNotifications",
+            @"Software\Microsoft\Windows\CurrentVersion\Notifications\Settings"
+        ];
+
+        foreach (string settingArea in settingAreas)
+        {
+            _ = SendMessageTimeout(
+                new IntPtr(HwndBroadcast),
+                WmSettingChange,
+                UIntPtr.Zero,
+                settingArea,
+                SmtoAbortIfHung,
+                BroadcastTimeoutMilliseconds,
+                out _);
+        }
     }
 
     private static string RunPowerShell(string command)
@@ -51,4 +84,14 @@ internal static class WindowsNotificationServiceRefresher
 
         return output;
     }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr SendMessageTimeout(
+        IntPtr hWnd,
+        uint msg,
+        UIntPtr wParam,
+        string lParam,
+        uint flags,
+        uint timeout,
+        out UIntPtr result);
 }

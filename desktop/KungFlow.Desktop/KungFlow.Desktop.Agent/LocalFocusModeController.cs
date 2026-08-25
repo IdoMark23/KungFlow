@@ -18,21 +18,33 @@ public sealed class LocalFocusModeController
     {
         ClearLegacyPolicyOverride();
 
-        if (this.isEnabled == isEnabled)
+        bool currentState = ReadCurrentState();
+        this.isEnabled = currentState;
+
+        if (currentState == isEnabled)
         {
+            DesktopDiagnosticLogger.Log(
+                "windows_notifications_toggle_skipped",
+                new Dictionary<string, string?>
+                {
+                    ["requestedNotificationsState"] = isEnabled ? "off" : "on",
+                    ["actualNotificationsState"] = currentState ? "off" : "on",
+                    ["reason"] = "already_in_requested_state"
+                });
             return;
         }
 
         WriteToastEnabled(isEnabled ? 0 : 1);
         WindowsNotificationServiceRefresher.RefreshPushNotificationService();
-        this.isEnabled = isEnabled;
+        this.isEnabled = ReadCurrentState();
 
         DesktopDiagnosticLogger.Log(
             "windows_notifications_toggle_applied",
             new Dictionary<string, string?>
             {
                 ["notificationsState"] = isEnabled ? "off" : "on",
-                ["toastEnabled"] = isEnabled ? "0" : "1"
+                ["toastEnabled"] = isEnabled ? "0" : "1",
+                ["actualNotificationsState"] = this.isEnabled ? "off" : "on"
             });
     }
 

@@ -835,6 +835,7 @@ public partial class MainWindow : Window
             return;
         }
 
+        bool wasUsingGlobalFirewall = agentSettings.Firewall.UseGlobalNotificationFirewall;
         bool shouldUseGlobalFirewall = GlobalFirewallModeRadioButton.IsChecked == true;
 
         if (!shouldUseGlobalFirewall && focusModeController.RefreshState())
@@ -852,12 +853,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        agentSettings.Firewall.UseGlobalNotificationFirewall = shouldUseGlobalFirewall;
-        DesktopAgentSettingsStore.Save(agentSettings);
-        UpdateFirewallModeControls();
-
         try
         {
+            if (!wasUsingGlobalFirewall && shouldUseGlobalFirewall)
+            {
+                applicationFirewallController.SetApplicationsSilenced(
+                    RefreshAvailableFirewallTargets(),
+                    agentSettings.Firewall.MutedApplicationIds,
+                    shouldSilence: false);
+            }
+
+            agentSettings.Firewall.UseGlobalNotificationFirewall = shouldUseGlobalFirewall;
+            DesktopAgentSettingsStore.Save(agentSettings);
+            UpdateFirewallModeControls();
             ApplyFirewallState(currentFirewallActiveState);
             UpdateManualNotificationControls();
             UpdateLocalFocusModeIndicator();
@@ -909,9 +917,6 @@ public partial class MainWindow : Window
             ? "Selected apps are saved for selective mode, but global mode currently protects all notifications."
             : BuildSelectedFirewallTargetsText();
 
-        bool hasSelectedTargets = HasSelectedAvailableFirewallTargets();
-        TestSelectiveAppSilenceButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
-        TestSelectiveAppRestoreButton.IsEnabled = !usesGlobalFirewall && hasSelectedTargets;
         FirewallTargetsPanel.IsEnabled = !usesGlobalFirewall;
         FirewallTargetsPanel.Opacity = usesGlobalFirewall ? 0.62 : 1.0;
     }
@@ -933,12 +938,6 @@ public partial class MainWindow : Window
             : $"Selected app targets: {string.Join(", ", selectedTargets)}.";
     }
 
-    private bool HasSelectedAvailableFirewallTargets()
-    {
-        return availableFirewallTargets.Any(target =>
-            agentSettings.Firewall.IsApplicationMuted(target.Id));
-    }
-
     private void UpdateFirewallTargetAvailabilityText()
     {
         int totalSupportedTargets = FirewallTargetCatalog.Defaults.Count;
@@ -953,82 +952,6 @@ public partial class MainWindow : Window
     {
         availableFirewallTargets = applicationFirewallController.GetAvailableTargets(FirewallTargetCatalog.Defaults);
         return availableFirewallTargets;
-    }
-
-    private void TestSelectiveAppSilenceButton_Click(object sender, RoutedEventArgs e)
-    {
-        TestSelectiveAppFirewallState(shouldSilence: true);
-    }
-
-    private void TestSelectiveAppRestoreButton_Click(object sender, RoutedEventArgs e)
-    {
-        TestSelectiveAppFirewallState(shouldSilence: false);
-    }
-
-    private void TestSelectiveAppFirewallState(bool shouldSilence)
-    {
-        if (agentSettings.Firewall.UseGlobalNotificationFirewall)
-        {
-            SetDesktopStatusMessage("Switch to selective mode before testing selected app targets.", true);
-            return;
-        }
-
-        IReadOnlyList<FirewallTarget> targets = RefreshAvailableFirewallTargets();
-
-        if (!targets.Any(target => agentSettings.Firewall.IsApplicationMuted(target.Id)))
-        {
-            SetDesktopStatusMessage("Choose at least one app target before testing selective mode.", true);
-            return;
-        }
-
-        if (focusModeController.RefreshState())
-        {
-            currentFirewallActiveState = true;
-            UpdateManualNotificationControls();
-            UpdateLocalFocusModeIndicator();
-            SetDesktopStatusMessage(
-                "Selective app testing requires Windows Notifications to be on. Deactivate the global firewall first.",
-                true);
-            return;
-        }
-
-        try
-        {
-            ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
-                targets,
-                agentSettings.Firewall.MutedApplicationIds,
-                shouldSilence);
-
-            currentFirewallActiveState = shouldSilence && result.HasUpdates;
-            SetManualNotificationOverride(currentFirewallActiveState);
-            FirewallTargetStatusTextBlock.Text = result.Summary;
-            UpdateManualNotificationControls();
-            UpdateLocalFocusModeIndicator();
-            SetDesktopStatusMessage(
-                result.Summary,
-                shouldSilence && !result.HasUpdates);
-
-            DesktopDiagnosticLogger.Log(
-                "selective_app_firewall_test_applied",
-                new Dictionary<string, string?>
-                {
-                    ["requestedState"] = shouldSilence ? "off" : "on",
-                    ["updatedKeys"] = string.Join(",", result.UpdatedRegistryKeys),
-                    ["missingApplications"] = string.Join(",", result.MissingApplications)
-                });
-        }
-        catch (Exception ex)
-        {
-            SetDesktopStatusMessage(ex.Message, true);
-            DesktopDiagnosticLogger.Log(
-                "selective_app_firewall_test_failed",
-                new Dictionary<string, string?>
-                {
-                    ["requestedState"] = shouldSilence ? "off" : "on",
-                    ["errorType"] = ex.GetType().FullName,
-                    ["message"] = ex.Message
-                });
-        }
     }
 
     private async void ToggleNotificationsButton_Click(object sender, RoutedEventArgs e)
@@ -1108,6 +1031,26 @@ public partial class MainWindow : Window
         bool previousState = IsFirewallActive();
         bool requestedState = manualNotificationOverride ?? shouldSilenceNotifications;
 
+        if (previousState == requestedState)
+        {
+            DesktopDiagnosticLogger.Log(
+                "automatic_notification_state_skipped",
+                new Dictionary<string, string?>
+                {
+                    ["serverRecommendation"] = shouldSilenceNotifications ? "off" : "on",
+                    ["requestedState"] = requestedState ? "off" : "on",
+                    ["currentState"] = previousState ? "off" : "on",
+                    ["controlMode"] = manualNotificationOverride.HasValue
+                        ? "manual override"
+                        : "automatic control",
+                    ["reason"] = "state_unchanged"
+                });
+
+            UpdateManualNotificationControls();
+            UpdateLocalFocusModeIndicator();
+            return;
+        }
+
         ApplyFirewallState(requestedState);
 
         bool currentState = IsFirewallActive();
@@ -1148,38 +1091,36 @@ public partial class MainWindow : Window
 
         if (agentSettings.Firewall.UseGlobalNotificationFirewall)
         {
-            applicationFirewallController.SetApplicationsSilenced(
-                targets,
-                agentSettings.Firewall.MutedApplicationIds,
-                shouldSilence: false);
             focusModeController.SetEnabled(shouldActivate);
             currentFirewallActiveState = focusModeController.IsEnabled();
             FirewallTargetStatusTextBlock.Text = shouldActivate
                 ? "Global firewall is active. All Windows notifications are off."
                 : "Global firewall is inactive. Windows notifications are on.";
-            return;
         }
-
-        if (shouldActivate && !targets.Any(target => agentSettings.Firewall.IsApplicationMuted(target.Id)))
+        else
         {
-            throw new InvalidOperationException(
-                "Selective firewall has no selected app targets. Choose at least one app or switch to global mode.");
+            if (shouldActivate && !targets.Any(target => agentSettings.Firewall.IsApplicationMuted(target.Id)))
+            {
+                throw new InvalidOperationException(
+                    "Selective firewall has no selected app targets. Choose at least one app or switch to global mode.");
+            }
+
+            focusModeController.SetEnabled(false);
+
+            ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
+                targets,
+                agentSettings.Firewall.MutedApplicationIds,
+                shouldActivate);
+
+            if (shouldActivate && !result.HasUpdates)
+            {
+                throw new InvalidOperationException(
+                    $"{result.Summary} Open Windows Settings > System > Notifications, toggle the target app once, then try again.");
+            }
+
+            currentFirewallActiveState = shouldActivate && result.HasUpdates;
+            FirewallTargetStatusTextBlock.Text = result.Summary;
         }
-
-        ApplicationFirewallApplyResult result = applicationFirewallController.SetApplicationsSilenced(
-            targets,
-            agentSettings.Firewall.MutedApplicationIds,
-            shouldActivate);
-
-        if (shouldActivate && !result.HasUpdates)
-        {
-            throw new InvalidOperationException(
-                $"{result.Summary} Open Windows Settings > System > Notifications, toggle the target app once, then try again.");
-        }
-
-        focusModeController.SetEnabled(false);
-        currentFirewallActiveState = shouldActivate && result.HasUpdates;
-        FirewallTargetStatusTextBlock.Text = result.Summary;
     }
 
     private string GetFirewallModeLabel()
