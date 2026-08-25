@@ -60,9 +60,9 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 
 ---
 
-## Current Prototype
+## Product Features
 
-The current prototype includes:
+KungFlow currently includes:
 
 - Desktop register, login, logout, and change-password flows.
 - Remembered last login credentials for faster sign-in without automatic token login.
@@ -109,42 +109,6 @@ SQL Server / SQL Server LocalDB
 ```
 
 The desktop app owns the Windows-specific behavior. The server owns user identity, metric persistence, cognitive-state calculation, and event history. This separation keeps the UI from becoming the place where core product logic lives.
-
----
-
-## Core Concepts
-
-| Concept | Meaning |
-| --- | --- |
-| Cognitive-load score | A weighted score computed from activity metrics such as window switching, typing, delete/backspace usage, and mouse movement |
-| Baseline | A personal reference score learned from the user's early activity samples |
-| Adaptive baseline | A baseline that keeps updating over time with an exponential moving average |
-| Notification firewall | The protection layer that silences interruptions when KungFlow detects overload |
-| Global mode | Turns off Windows notifications globally while the firewall is active |
-| Selective mode | Targets selected app notification settings when Windows exposes them |
-| Manual control | User directly activates or deactivates the firewall |
-| Automatic control | KungFlow follows the server's overload recommendation |
-
----
-
-## Backend API
-
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /health` | Server health check |
-| `POST /api/auth/register` | Create a new user |
-| `POST /api/auth/login` | Log in and create a session token |
-| `POST /api/auth/logout` | End the current session |
-| `POST /api/auth/change-password` | Change the logged-in user's password |
-| `POST /api/metrics` | Save a metrics sample and return updated cognitive status |
-| `GET /api/status/current` | Return the user's current cognitive state |
-| `POST /api/firewall/events` | Record firewall activation/deactivation events |
-| `GET /api/firewall/events` | Return recent firewall events |
-| `POST /api/demo/baseline` | Demo-only helper for filling baseline samples |
-| `POST /api/demo/overload` | Demo-only helper for triggering overload |
-| `POST /api/demo/reset-metrics` | Demo-only helper for clearing a user's metrics |
-
----
 
 ## Data And Privacy
 
