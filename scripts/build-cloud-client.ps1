@@ -3,7 +3,7 @@ param(
     [ValidatePattern('^https://')]
     [string]$ApiUrl,
 
-    [string]$OutputPath = (Join-Path $PSScriptRoot "..\server\public\landing\downloads\kungflow-client.zip")
+    [string]$OutputPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +11,11 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $project = Join-Path $repoRoot "desktop\KungFlow.Desktop\KungFlow.Desktop.UI\KungFlow.Desktop.UI.csproj"
 $publishDirectory = Join-Path $repoRoot "desktop\build-cloud-client"
 $packageDirectory = Join-Path $publishDirectory "desktop"
+
+if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+    $OutputPath = Join-Path $repoRoot "server\public\landing\downloads\kungflow-client.zip"
+}
+
 $resolvedOutputPath = [System.IO.Path]::GetFullPath($OutputPath)
 
 if (Test-Path -LiteralPath $publishDirectory) {
