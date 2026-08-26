@@ -18,6 +18,7 @@ npm-debug.log*
 .dotnet-sdk/
 dotnet-install.ps1
 desktop/build-updated/
+desktop/build-cloud-client/
 
 # Local diagnostics and browser-automation screenshots
 login-check*.png

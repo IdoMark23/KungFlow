@@ -7,6 +7,9 @@ namespace KungFlow.Desktop.Agent;
 
 public sealed class KungFlowApiClient
 {
+    private const string ApiUrlEnvironmentVariable = "KUNGFLOW_API_URL";
+    private const string DefaultApiUrl = "http://127.0.0.1:3000";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -15,8 +18,40 @@ public sealed class KungFlowApiClient
     private readonly HttpClient httpClient;
 
     public KungFlowApiClient()
-        : this(new HttpClient { BaseAddress = new Uri("http://127.0.0.1:3000") })
+        : this(new HttpClient { BaseAddress = ResolveBaseAddress() })
     {
+    }
+
+    private static Uri ResolveBaseAddress()
+    {
+        string? configuredUrl = Environment.GetEnvironmentVariable(ApiUrlEnvironmentVariable);
+
+        if (string.IsNullOrWhiteSpace(configuredUrl))
+        {
+            string settingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+
+            if (File.Exists(settingsPath))
+            {
+                using JsonDocument settings = JsonDocument.Parse(File.ReadAllText(settingsPath));
+
+                if (settings.RootElement.TryGetProperty("Api", out JsonElement api) &&
+                    api.TryGetProperty("BaseUrl", out JsonElement baseUrl))
+                {
+                    configuredUrl = baseUrl.GetString();
+                }
+            }
+        }
+
+        configuredUrl = string.IsNullOrWhiteSpace(configuredUrl) ? DefaultApiUrl : configuredUrl.Trim();
+
+        if (!Uri.TryCreate(configuredUrl, UriKind.Absolute, out Uri? uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new InvalidOperationException(
+                $"KungFlow API URL must be an absolute HTTP or HTTPS URL. Check {ApiUrlEnvironmentVariable} or appsettings.json.");
+        }
+
+        return uri;
     }
 
     private KungFlowApiClient(HttpClient httpClient)
