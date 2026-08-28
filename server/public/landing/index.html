@@ -12,7 +12,7 @@
   <body>
     <header class="topbar">
       <a class="brand" href="#top" aria-label="KungFlow home"><img src="assets/logo.png" alt="KungFlow logo"><span>KungFlow</span></a>
-      <nav class="nav-links" aria-label="Main navigation"><a href="#how">How it works</a><a href="#signals">Signals</a><a class="nav-download" href="downloads/kungflow-client.zip" download>Download</a></nav>
+      <nav class="nav-links" aria-label="Main navigation"><a href="#product">Product</a><a href="#how">How it works</a><a href="#signals">Signals</a><a class="nav-download" href="downloads/kungflow-client.zip" download>Download</a></nav>
     </header>
     <main id="top">
       <section class="hero">
@@ -23,11 +23,26 @@
           <div class="actions"><a class="button primary" href="downloads/kungflow-client.zip" download><span class="download-icon">↓</span> Download for Windows</a><a class="button secondary" href="#how">See how it works</a></div>
           <p class="download-note">Includes the Windows desktop app · Requires Windows x64 and .NET 10 Desktop Runtime</p>
         </div>
-        <div class="dashboard" aria-label="KungFlow live status preview">
-          <div class="dashboard-top"><div><span class="live-dot"></span><span>Protection active</span></div><span class="shield">✓</span></div>
-          <div class="status-copy"><span>Current state</span><strong>Focused</strong><p>Your notifications are flowing normally.</p></div>
-          <div class="meter" aria-label="Cognitive load 42 percent"><div class="meter-value"><strong>42</strong><span>/ 100</span></div><div class="meter-track"><span></span></div><div class="meter-labels"><span>Low load</span><span>High load</span></div></div>
-          <div class="metric-grid"><div><span>Window switches</span><strong>3</strong><small>Stable</small></div><div><span>Typing pace</span><strong>Calm</strong><small>Normal</small></div><div><span>Mouse activity</span><strong>Steady</strong><small>Normal</small></div></div>
+        <figure class="hero-product-shot">
+          <img src="assets/kungflow-status-overload.png" alt="KungFlow desktop app detecting high cognitive load and activating the notification firewall">
+          <figcaption><span class="live-dot"></span>Actual KungFlow desktop experience</figcaption>
+        </figure>
+      </section>
+      <section class="product-section" id="product">
+        <div class="section-heading product-heading"><p class="eyebrow"><span></span>Inside the app</p><h2>See your focus state. Understand what changed.</h2><p>KungFlow keeps the current cognitive state, behavioral signals, and notification controls together in one quiet Windows experience.</p></div>
+        <div class="product-gallery">
+          <figure class="product-shot product-shot-wide">
+            <img src="assets/kungflow-status-open.png" alt="KungFlow status screen showing no cognitive overload and notifications open" loading="lazy">
+            <figcaption><strong>A clear focus state</strong><span>Know when notifications can flow and when KungFlow is protecting your attention.</span></figcaption>
+          </figure>
+          <figure class="product-shot">
+            <img src="assets/kungflow-statistics.png" alt="KungFlow statistics screen with activity metrics, cognitive load score, and personal baseline" loading="lazy">
+            <figcaption><strong>Your signals, in context</strong><span>Review activity metrics alongside your personal baseline and current load score.</span></figcaption>
+          </figure>
+          <figure class="product-shot">
+            <img src="assets/kungflow-firewall-settings.png" alt="KungFlow settings screen with notification firewall controls" loading="lazy">
+            <figcaption><strong>Protection you control</strong><span>Choose how the notification firewall responds when cognitive load rises.</span></figcaption>
+          </figure>
         </div>
       </section>
       <section class="section" id="how">
