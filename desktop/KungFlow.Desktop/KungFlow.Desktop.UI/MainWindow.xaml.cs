@@ -1280,10 +1280,18 @@ public partial class MainWindow : Window
 
         if (isFirewallActive)
         {
-            statusColor = MediaColor.FromRgb(74, 222, 128);
-            borderColor = MediaColor.FromRgb(22, 101, 52);
-            badgeBackground = MediaColor.FromRgb(20, 83, 45);
-            badgeBorder = MediaColor.FromRgb(34, 197, 94);
+            statusColor = isOverloaded
+                ? MediaColor.FromRgb(248, 113, 113)
+                : MediaColor.FromRgb(74, 222, 128);
+            borderColor = isOverloaded
+                ? MediaColor.FromRgb(127, 29, 29)
+                : MediaColor.FromRgb(22, 101, 52);
+            badgeBackground = isOverloaded
+                ? MediaColor.FromRgb(69, 10, 10)
+                : MediaColor.FromRgb(20, 83, 45);
+            badgeBorder = isOverloaded
+                ? MediaColor.FromRgb(248, 113, 113)
+                : MediaColor.FromRgb(34, 197, 94);
             badgeText = "Protected";
             summary = "You are protected right now.";
             detail = $"The KungFlow Firewall is active in {GetFirewallModeLabel()} and reducing interruption flow.";
@@ -1332,7 +1340,10 @@ public partial class MainWindow : Window
         FirewallProtectionBadgeTextBlock.Text = badgeText;
         FirewallProtectionBadgeTextBlock.Foreground = new SolidColorBrush(statusColor);
         FirewallStatusSummaryTextBlock.Text = summary;
-        FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(statusColor);
+        FirewallStatusSummaryTextBlock.Foreground = new SolidColorBrush(
+            isOverloaded
+                ? MediaColor.FromRgb(248, 113, 113)
+                : statusColor);
         FirewallStatusDetailTextBlock.Text = detail;
         FirewallStatusModeTextBlock.Text = GetFirewallModeDisplayName();
         FirewallStatusProtectedAppsTextBlock.Text = BuildFirewallProtectedAppsSummary();
