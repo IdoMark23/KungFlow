@@ -1,6 +1,6 @@
 const defaultCognitiveLoadConfig = {
   baselineSampleCount: 180,
-  overloadThresholdMultiplier: 1.25,
+  overloadThresholdMultiplier: 1,
   baselineEmaAlpha: 0.35,
   metricWeights: {
     openTabsCount: 1,
