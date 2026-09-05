@@ -62,7 +62,7 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 
 ## Product Features
 
-KungFlow currently includes:
+KungFlow Include:
 
 - Desktop register, login, logout, and change-password flows.
 - Remembered last login credentials for faster sign-in without automatic token login.
@@ -109,39 +109,6 @@ SQL Server / SQL Server LocalDB
 ```
 
 The desktop app owns the Windows-specific behavior. The server owns user identity, metric persistence, cognitive-state calculation, and event history. This separation keeps the UI from becoming the place where core product logic lives.
-
-## API Configuration
-
-The desktop client resolves the API address in this order:
-
-1. The `KUNGFLOW_API_URL` environment variable.
-2. `Api.BaseUrl` in `appsettings.json` next to the desktop executable.
-3. The local default, `http://127.0.0.1:3000`.
-
-The committed `appsettings.json` is intended for local development. To test the desktop app against a hosted service without editing files:
-
-```powershell
-$env:KUNGFLOW_API_URL = "https://your-service-url.run.app"
-./scripts/start-desktop-ui.ps1
-```
-
-Do not commit database passwords, connection strings, API keys, or real `.env` files.
-
-## Google Cloud Run Deployment
-
-The server includes a production `Dockerfile`. From the `server` directory, deploy it after configuring the SQL Server environment variables or secrets required by the selected database:
-
-```powershell
-gcloud run deploy kungflow-api --source . --region europe-west1 --allow-unauthenticated
-```
-
-Cloud Run provides the service URL after deployment. Use that HTTPS URL to build the downloadable Windows client:
-
-```powershell
-./scripts/build-cloud-client.ps1 -ApiUrl "https://your-service-url.run.app"
-```
-
-The script publishes the Windows application and replaces `server/public/landing/downloads/kungflow-client.zip` with a package configured for the hosted API. Commit that generated ZIP when the landing page should distribute the new cloud client.
 
 ## Data And Privacy
 
