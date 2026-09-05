@@ -24,6 +24,9 @@ if (Test-Path -LiteralPath $publishDirectory) {
 
 New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
 dotnet publish $project -c Release -r win-x64 --self-contained false -o $packageDirectory
+if ($LASTEXITCODE -ne 0) {
+    throw "dotnet publish failed with exit code $LASTEXITCODE. The cloud client package was not created."
+}
 
 $settings = @{
     Api = @{
