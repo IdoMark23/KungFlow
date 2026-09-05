@@ -53,16 +53,8 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 | Document | What it contains |
 | --- | --- |
 | [`Project Exhibition Docs/kungflow_pitch.pptx`](Project%20Exhibition%20Docs/kungflow_pitch.pptx) | Final project exhibition pitch deck |
-| [`Project Exhibition Docs/kungflow_pitch.pdf`](Project%20Exhibition%20Docs/kungflow_pitch.pdf) | PDF export of the final project exhibition pitch |
 | [`Project Exhibition Docs/KungFlow_Executive_Summary.docx`](Project%20Exhibition%20Docs/KungFlow_Executive_Summary.docx) | Final editable executive summary |
-| [`Project Exhibition Docs/KungFlow_Executive_Summary.pdf`](Project%20Exhibition%20Docs/KungFlow_Executive_Summary.pdf) | PDF export of the executive summary |
 | [`Project Exhibition Docs/poster/KungFlow_Project_Poster_15002936.pdf`](Project%20Exhibition%20Docs/poster/KungFlow_Project_Poster_15002936.pdf) | Final project poster for printing |
-| [`Project Exhibition Docs/poster/KungFlow_Project_Poster_15002936.jpg`](Project%20Exhibition%20Docs/poster/KungFlow_Project_Poster_15002936.jpg) | High-resolution poster image export |
-| [`Hub/product/PRD.docx`](Hub/product/PRD.docx) | Product requirements and project definition |
-| [`Hub/mid presentation/KungFlow.pdf`](Hub/mid%20presentation/KungFlow.pdf) | Main workshop product presentation |
-| [`Hub/research/Kungflow_experiment.docx`](Hub/research/Kungflow_experiment.docx) | Internal experiment and validation material |
-| [`Hub/product/product-demo-assets/`](Hub/product/product-demo-assets/) | Demo video and product screenshots |
-| [`Hub/investors presentation/KungFlow Investor Pitch.pptx`](Hub/investors%20presentation/KungFlow%20Investor%20Pitch.pptx) | Supporting investor-pitch version |
 
 ---
 
