@@ -12,6 +12,14 @@ KungFlow started as a browser-focused prototype, but the current product is a Wi
 
 ---
 
+## Download The App
+
+The current Windows client can be downloaded as a ZIP from:
+
+[https://34-46-238-54.sslip.io/](https://34-46-238-54.sslip.io/)
+
+---
+
 ## What KungFlow Does
 
 - Collects desktop activity signals such as open windows, window switches, key presses, delete/backspace usage, typing pace, and mouse movement.
